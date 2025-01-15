@@ -9,4 +9,4 @@ COMO USAR:
  - Terceiro ainda usando o arquivo knn_slic_metric.py, mude new_segments para False, e train para true, e new_model para True, aqui selecionando o modelo de kd-tree, a imagem, e os segmentos criados, será permitido selecionar superpixels que pertencem à mesma árvore, é preciso selecionar todas as árvores que estão divididas separadamente para treinar a matriz métrica necessária para o próximo passo.
  - Quarto, ainda com knn_slic_metric.py, mude train para false. O programa pegará todos os segmentos vizinhos e usará a métrica treinada para tentar juntar árvores que são mais próximas tanto em posição quanto em cor.
 
-Obs.: para selecionar os arquivos é importante usar ler o nome da janela aberta, ela fala qual é o arquivo esperado para cada seleção.
+Obs.: para selecionar os arquivos é importante ler o nome da janela aberta, ela fala qual é o arquivo esperado para cada seleção.
