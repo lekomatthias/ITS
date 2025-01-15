@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.neighbors import NearestNeighbors
 
 class AdaptiveMetric:
     def __init__(self):
@@ -8,11 +9,10 @@ class AdaptiveMetric:
     def save_metric(self, file_path):
         if self.M is None:
             raise ValueError("A matriz M precisa ser calculada antes de salvar.")
-        np.save(file_path, self.M)  # Salva no formato .npy!!!
+        np.save(file_path, self.M)  # Salva no formato .npy!
 
     def load_metric(self, file_path):
-        self.M = np.load(file_path)  # Carrega do formato .npy!!!
-
+        self.M = np.load(file_path)  # Carrega do formato .npy!
 
     def extract_superpixels(self, image, segments):
         """
@@ -37,151 +37,104 @@ class AdaptiveMetric:
 
         return superpixels, unique_segments
 
-
     def compute_metric_matrix(self, superpixels, labels):
         """
-        Calcula a matriz métrica adaptativa M e armazena em self.M.
+        Calcula a matriz métrica adaptativa M no espaço reduzido (2D) e armazena em self.M.
         """
-        positions = np.array([sp[0] for sp in superpixels])
-        colors = np.array([sp[1] for sp in superpixels])
-        n, d_pos = positions.shape
-        _, d_col = colors.shape
-
-        # Calcular distâncias euclidianas
-        pos_distances = np.linalg.norm(positions[:, np.newaxis] - positions, axis=2)
-        col_distances = np.linalg.norm(colors[:, np.newaxis] - colors, axis=2)
+        # Reduzir superpixels para 2 dimensões
+        distances = []
+        for i in range(len(superpixels)):
+            for j in range(i + 1, len(superpixels)):
+                diff_pos = np.linalg.norm(np.array(superpixels[i][0]) - np.array(superpixels[j][0]))
+                diff_col = np.linalg.norm(np.array(superpixels[i][1]) - np.array(superpixels[j][1]))
+                distances.append([diff_pos, diff_col])
+        
+        # Transformar lista em matriz
+        X = np.array(distances)
+        n, d = X.shape
 
         # Ajuste de labels para que sejam contínuos
         unique_labels, new_labels = np.unique(labels, return_inverse=True)
         K = len(unique_labels)
-        
+
         # Criar matriz de designação Y
         Y = np.zeros((n, K))
         for i, label in enumerate(new_labels):
             Y[i, label] = 1
 
         # Calcular centros dos clusters
-        cluster_centers_pos = np.zeros((K, d_pos))
-        cluster_centers_col = np.zeros((K, d_col))
+        Z = np.zeros((K, d))
         for k in range(K):
-            indices = np.where(labels == k)[0]
-            if len(indices) == 0: continue
-            cluster_centers_pos[k, :] = np.mean(positions[indices], axis=0)
-            cluster_centers_col[k, :] = np.mean(colors[indices], axis=0)
+            indices = np.where(new_labels == k)[0]
+            if len(indices) == 0:
+                continue
+            Z[k, :] = np.mean(X[indices], axis=0)
 
-        # Resolver para M
-        X_pos_pinv = np.linalg.pinv(pos_distances)
-        X_col_pinv = np.linalg.pinv(col_distances)
+        # Resolver para M1
+        X_pinv = np.linalg.pinv(X)
         Y_pinv = np.linalg.pinv(Y)
-        M_pos = X_pos_pinv @ Y @ Y_pinv @ X_pos_pinv.T
-        M_col = X_col_pinv @ Y @ Y_pinv @ X_col_pinv.T
+        M1 = X_pinv @ Y @ Y_pinv @ X_pinv.T
 
-        # Ajustar as dimensões das matrizes para combinar corretamente
-        M_pos = M_pos[:d_pos, :d_pos]
-        M_col = M_col[:d_col, :d_col]
+        P = np.diag(np.ones(d))  # Agora P é d x d (2 x 2)
+        self.M = P @ M1 @ P.T
 
-        # Combinar as matrizes de posição e cor
-        self.M = np.block([
-            [M_pos, np.zeros((d_pos, d_col))],
-            [np.zeros((d_col, d_pos)), M_col]
-        ])
 
     def update_metric_matrix(self, new_superpixels, new_labels, alpha=0.8):
         """
         Atualiza a matriz métrica existente com base em novos dados.
         """
-        if self.M is None:
-            # Se ainda não houver uma métrica, apenas calcule a partir dos novos dados.
+        if self.M is not None:
+            M_old = self.M.copy()
             self.compute_metric_matrix(new_superpixels, new_labels)
-            return
-
-        M_old = self.M.copy()
-        self.compute_metric_matrix(new_superpixels, new_labels)
-
-        # Combinar a métrica antiga com a nova
-        self.M = alpha * M_old + (1 - alpha) * self.M
-
+            self.M = alpha * M_old + (1 - alpha) * self.M
+        else:
+            self.compute_metric_matrix(new_superpixels, new_labels)
 
     def mahalanobis_distance(self, sp1, sp2):
         """
-        Calcula a distância de Mahalanobis entre dois superpixels e a normaliza.
+        Calcula a distância de Mahalanobis entre dois superpixels.
+        A entrada sp1 e sp2 contém 5 parâmetros: [x, y] para posição e [r, g, b] para cor.
         """
+
         if self.M is None:
             raise ValueError("A matriz M precisa ser calculada antes de calcular a distância de Mahalanobis.")
 
-        diff_pos = np.array(sp1[0]) - np.array(sp2[0])
-        diff_col = np.array(sp1[1]) - np.array(sp2[1])
-        diff = np.concatenate((diff_pos, diff_col))
+        # Distâncias euclidianas para reduzir a dimensão
+        diff_pos = np.linalg.norm(np.array(sp1[0]) - np.array(sp2[0]))  # Diferença de posição
+        diff_col = np.linalg.norm(np.array(sp1[1]) - np.array(sp2[1]))  # Diferença de cor
+
+        # Vetor reduzido (2 dimensões)
+        diff = np.array([diff_pos, diff_col]).reshape(-1, 1)
+
+        # Calcular distância de Mahalanobis
         dist = np.sqrt(diff.T @ self.M @ diff)
-        
-        # Normalizar a distância pela raiz quadrada da dimensionalidade dos dados
-        d = len(diff)
-        normalized_dist = dist / np.sqrt(d)
-        
-        return normalized_dist
+        return float(dist)
 
-    def cluster_with_metric(self, superpixels, threshold):
-        """
-        Aplica a métrica para agrupar superpixels.
-        """
-
-        n, d = superpixels.shape
-
-        # Garantir que M seja simétrica e positiva semi-definida
-        if not np.allclose(self.M, self.M.T):
-            raise ValueError("A métrica M deve ser simétrica.")
-
-        # Inicializa os rótulos com -1 (não rotulados)
-        labels = np.full(n, -1, dtype=int)
-        current_label = 0
-
-        for i in range(n):
-            # Se o superpixel ainda não foi rotulado
-            if labels[i] == -1:
-                labels[i] = current_label
-                for j in range(i + 1, n):
-                    diff = superpixels[i] - superpixels[j]
-                    distance = np.sqrt(diff.T @ self.M @ diff)
-                    if distance <= threshold:
-                        labels[j] = current_label
-                current_label += 1
-
-        return labels
-
-    def data(self, list):
-        """
-        Recebe uma lista e mostra histograma, média e desvio padrão.
-        """
-
-        # Calcular média e desvio padrão
-        mean_distance = np.mean(list)
-        std_distance = np.std(list)
-        print(f"Média: {mean_distance:.2f}")
-        print(f"Desvio padrão: {std_distance:.2f}")
-
-        # Criar histograma
-        plt.hist(list, bins=30, edgecolor='black')
-        plt.title('Histograma dos dados coletados')
-        plt.xlabel('Valor')
-        plt.ylabel('Frequência')
-        plt.axvline(mean_distance, color='r', linestyle='dashed', linewidth=1, label=f'Média: {mean_distance:.2f}')
-        plt.axvline(mean_distance + std_distance, color='g', linestyle='dashed', linewidth=1, label=f'+1 Desvio Padrão: {mean_distance + std_distance:.2f}')
-        plt.axvline(mean_distance - std_distance, color='g', linestyle='dashed', linewidth=1, label=f'-1 Desvio Padrão: {mean_distance - std_distance:.2f}')
-        plt.legend()
-        plt.show()
 
     def merge_similar_segments(self, segments, superpixels, labels, threshold):
         """
         Mescla superpixels semelhantes com base na distância de Mahalanobis.
+        Compara apenas segmentos vizinhos.
         """
-        
         unique_labels = np.unique(labels)
         label_map = {label: label for label in unique_labels}
 
         distances = []
         switches = 0
+
+        # Flatten superpixels to a consistent shape
+        flattened_superpixels = np.array([np.concatenate((sp[0], sp[1])) for sp in superpixels])
+
+        # Encontrar vizinhos usando NearestNeighbors
+        nn = NearestNeighbors(n_neighbors=2, algorithm='ball_tree').fit(flattened_superpixels)
+        neighbors = nn.kneighbors(flattened_superpixels, return_distance=False)
+
         for i, label1 in enumerate(unique_labels):
-            for label2 in unique_labels[i + 1:]:
+            for j in neighbors[i]:
+                label2 = labels[j]
+                if label1 == label2:
+                    continue
+
                 sp1_list = [sp for sp, lbl in zip(superpixels, labels) if lbl == label1]
                 sp2_list = [sp for sp, lbl in zip(superpixels, labels) if lbl == label2]
 
@@ -204,20 +157,51 @@ class AdaptiveMetric:
                     for key, value in label_map.items():
                         if value == root1 or value == root2:
                             label_map[key] = new_root
-        
-        self.data(distances)
 
         # Atualizar os segmentos para refletir os novos labels
         updated_segments = segments.copy()
-
         for index, new_label in label_map.items():
             updated_segments[segments == index] = new_label
 
         print(f"Antes: {len(np.unique(segments))} segmentos")
         print(f"Depois: {len(np.unique(updated_segments))} segmentos (com {switches} trocas)")
+        self.data(distances)
 
         return updated_segments
-    
+
+    def are_neighbors(self, segments, label1, label2):
+        """
+        Verifica se dois segmentos são vizinhos.
+        """
+        mask1 = segments == label1
+        mask2 = segments == label2
+        dilated_mask1 = np.pad(mask1, pad_width=1, mode='constant', constant_values=0)
+        dilated_mask2 = np.pad(mask2, pad_width=1, mode='constant', constant_values=0)
+        neighbors = np.logical_and(dilated_mask1[1:-1, 1:-1], dilated_mask2[1:-1, 1:-1])
+        return np.any(neighbors)
+
+    def data(self, list):
+        """
+        Recebe uma lista e mostra histograma, média e desvio padrão.
+        """
+
+        # Calcular média e desvio padrão
+        mean_distance = np.mean(list)
+        std_distance = np.std(list)
+        print(f"Média: {mean_distance:.5f}")
+        print(f"Desvio padrão: {std_distance:.5f}")
+
+        # Criar histograma
+        plt.hist(list, bins=30, edgecolor='black')
+        plt.title('Histograma dos dados coletados')
+        plt.xlabel('Valor')
+        plt.ylabel('Frequência')
+        plt.axvline(mean_distance, color='r', linestyle='dashed', linewidth=1, label=f'Média: {mean_distance:.5f}')
+        plt.axvline(mean_distance + std_distance, color='g', linestyle='dashed', linewidth=1, label=f'+1 Desvio Padrão: {mean_distance + std_distance:.5f}')
+        plt.axvline(mean_distance - std_distance, color='g', linestyle='dashed', linewidth=1, label=f'-1 Desvio Padrão: {mean_distance - std_distance:.5f}')
+        plt.legend()
+        plt.show()
+
     def process_image_segments(self, image, segments, threshold=0.1):
         """
         Processa a imagem e os segmentos para agrupar superpixels semelhantes com o mesmo label.
@@ -225,12 +209,12 @@ class AdaptiveMetric:
         # Extrair superpixels e labels
         superpixels, labels = self.extract_superpixels(image, segments)
         # Calcular matriz métrica adaptativa
-        self.update_metric_matrix(superpixels, labels, alpha=0.8)
+        self.update_metric_matrix(superpixels, labels)
         # Mesclar segmentos semelhantes
         updated_segments = self.merge_similar_segments(segments, superpixels, labels, threshold)
 
         return updated_segments
-    
+
     def train(self, image, segments):
         """
         Treina o modelo de métrica adaptativa com base nos segmentos fornecidos.
@@ -243,5 +227,4 @@ class AdaptiveMetric:
         Classifica a imagem com base nos segmentos fornecidos.
         """
         updated_segments = self.process_image_segments(image, segments, threshold)
-
         return updated_segments

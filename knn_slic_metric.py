@@ -81,7 +81,7 @@ class SuperpixelClassifier2(SuperpixelClassifier):
             img_temp[:, :, 0] = 0
         else:
             img_temp = image
-        new_segments = self.Similar_SP.classify_image(img_temp, segments, threshold=0.8)
+        new_segments = self.Similar_SP.classify_image(img_temp, segments, threshold=0.0005)
 
         output_image = self.Paint_image(image, new_segments)        
 
@@ -108,7 +108,7 @@ class SuperpixelClassifier2(SuperpixelClassifier):
         # Reconstrói os resultados para o formato original da imagem
         results = np.array(results).reshape(image.shape[:2])
         # Segmentar a imagem usando SLIC
-        segments = slic(image, n_segments=num_segments, compactness=15, sigma=1,
+        segments = slic(image, n_segments=num_segments, compactness=15, sigma=1, convert2lab=self.LAB, enforce_connectivity=True,
                         start_label=0, min_size_factor=20e-2, max_size_factor=1e+1, mask=results)
         np.save(segments_path, segments)
 
@@ -122,7 +122,7 @@ def main():
     new_model = True
     LAB = True
     # quantidade de superpixels
-    sp = 200
+    sp = 500
 
     print("Selecione o modelo a nível de pixel para aplicação.")
     model_path = filedialog.askopenfilename(title="Selecione o modelo para aplicação", filetypes=[("joblib", "*.joblib")])
@@ -142,9 +142,6 @@ def main():
     # Carregar a imagem selecionada
     apply_image = cv2.imread(apply_image_path)
     apply_image = cv2.cvtColor(apply_image, cv2.COLOR_BGR2RGB)
-    
-    # apply_image = cv2.cvtColor(apply_image, cv2.COLOR_BGR2LAB)
-    # apply_image[:, :, 0] = 1
 
     if new_segments:
         superpixel_classifier.SP_divide(apply_image, num_segments=sp)
