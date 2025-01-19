@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.neighbors import NearestNeighbors
+from time import time
 
 class AdaptiveMetric:
     def __init__(self):
@@ -76,7 +77,7 @@ class AdaptiveMetric:
         M1 = X_pinv @ Y @ Y_pinv @ X_pinv.T
 
         P = np.diag(np.ones(d))
-        self.M = (P @ M1 @ P.T)*1e+6 # Ajuste de escala
+        self.M = (P @ M1 @ P.T)*1e+9 # Ajuste de escala
 
 
     def update_metric_matrix(self, new_superpixels, new_labels, alpha=0.8):
@@ -111,19 +112,20 @@ class AdaptiveMetric:
         return float(dist)
 
 
-    def merge_similar_segments(self, segments, superpixels, labels, threshold):
+    def merge_similar_segments(self, segments, superpixels, labels, threshold, show_data=False):
         """
         Mescla superpixels semelhantes com base na distância de Mahalanobis.
         Compara apenas segmentos vizinhos.
         """
+        it = time()
         unique_labels = np.unique(labels)
         label_map = {label: label for label in unique_labels}
 
         distances = []
         switches = 0
 
-        # Lista de superpixels em 5 dimensões
-        flattened_superpixels = np.array([np.concatenate((sp[0], sp[1])) for sp in superpixels])
+        # Lista de posição dos superpixels
+        flattened_superpixels = np.array([sp[0] for sp in superpixels])
 
         # Encontrar vizinhos usando NearestNeighbors
         nn = NearestNeighbors(n_neighbors=10, algorithm='ball_tree').fit(flattened_superpixels)
@@ -168,7 +170,8 @@ class AdaptiveMetric:
 
         print(f"Antes: {len(np.unique(segments))} segmentos")
         print(f"Depois: {len(np.unique(updated_segments))} segmentos (com {switches} trocas)")
-        self.data(distances)
+        print(f"Tempo para mesclar segmentos: {(time()-it):.1f}s")
+        if show_data: self.data(distances)
 
         return updated_segments
 
@@ -180,11 +183,13 @@ class AdaptiveMetric:
         # Calcular média e desvio padrão
         mean_distance = np.mean(list)
         std_distance = np.std(list)
-        print(f"Média: {mean_distance:.3f}")
-        print(f"Desvio padrão: {std_distance:.3f}")
+        print(f"Média: {mean_distance:.3f}", end=", ")
+        print(f"Des.p.: {std_distance:.3f}")
+        print(f"Min: {np.min(list):.3f}", end=", ")
+        print(f"Max: {np.max(list):.3f}")
 
         # Criar histograma
-        plt.hist(list, bins=30, edgecolor='black')
+        plt.hist(list, bins=80, edgecolor='black')
         plt.title('Histograma dos dados coletados')
         plt.xlabel('Valor')
         plt.ylabel('Frequência')
@@ -194,29 +199,26 @@ class AdaptiveMetric:
         plt.legend()
         plt.show()
 
-    def process_image_segments(self, image, segments, threshold=0.1):
+    def train(self, image, segments):
         """
-        Processa a imagem e os segmentos para agrupar superpixels semelhantes com o mesmo label.
+        Treina o modelo de métrica adaptativa com base nos segmentos fornecidos.
         """
         # Extrair superpixels e labels
         superpixels, labels = self.extract_superpixels(image, segments)
         # Calcular matriz métrica adaptativa
         self.update_metric_matrix(superpixels, labels)
-        # Mesclar segmentos semelhantes
-        updated_segments = self.merge_similar_segments(segments, superpixels, labels, threshold)
 
-        return updated_segments
+    def classify_image(self, image, segments, threshold=0.1, show_data=False):
+        """
+        Processa a imagem e os segmentos para agrupar superpixels semelhantes com o mesmo label.
+        """
+        if self.M is None:
+            print("Erro: A matriz métrica não está disponível. Treine o modelo primeiro.")
+            return segments
 
-    def train(self, image, segments):
-        """
-        Treina o modelo de métrica adaptativa com base nos segmentos fornecidos.
-        """
+        # Extrair superpixels e labels
         superpixels, labels = self.extract_superpixels(image, segments)
-        self.update_metric_matrix(superpixels, labels)
+        # Mesclar segmentos semelhantes usando a métrica atual
+        updated_segments = self.merge_similar_segments(segments, superpixels, labels, threshold, show_data=show_data)
 
-    def classify_image(self, image, segments, threshold=0.1):
-        """
-        Classifica a imagem com base nos segmentos fornecidos.
-        """
-        updated_segments = self.process_image_segments(image, segments, threshold)
         return updated_segments
