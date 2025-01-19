@@ -75,8 +75,8 @@ class AdaptiveMetric:
         Y_pinv = np.linalg.pinv(Y)
         M1 = X_pinv @ Y @ Y_pinv @ X_pinv.T
 
-        P = np.diag(np.ones(d))  # Agora P é d x d (2 x 2)
-        self.M = P @ M1 @ P.T
+        P = np.diag(np.ones(d))
+        self.M = (P @ M1 @ P.T)*1e+6 # Ajuste de escala
 
 
     def update_metric_matrix(self, new_superpixels, new_labels, alpha=0.8):
@@ -122,11 +122,11 @@ class AdaptiveMetric:
         distances = []
         switches = 0
 
-        # Flatten superpixels to a consistent shape
+        # Lista de superpixels em 5 dimensões
         flattened_superpixels = np.array([np.concatenate((sp[0], sp[1])) for sp in superpixels])
 
         # Encontrar vizinhos usando NearestNeighbors
-        nn = NearestNeighbors(n_neighbors=2, algorithm='ball_tree').fit(flattened_superpixels)
+        nn = NearestNeighbors(n_neighbors=10, algorithm='ball_tree').fit(flattened_superpixels)
         neighbors = nn.kneighbors(flattened_superpixels, return_distance=False)
 
         for i, label1 in enumerate(unique_labels):
@@ -135,6 +135,8 @@ class AdaptiveMetric:
                 if label1 == label2:
                     continue
 
+                # Garante que estou verificando todos os segmentos desse label
+                # Além de busrcar o sp relacionado ao label
                 sp1_list = [sp for sp, lbl in zip(superpixels, labels) if lbl == label1]
                 sp2_list = [sp for sp, lbl in zip(superpixels, labels) if lbl == label2]
 
@@ -148,6 +150,7 @@ class AdaptiveMetric:
 
                 dist = self.mahalanobis_distance([sp1_pos, sp1_col], [sp2_pos, sp2_col])
                 distances.append(dist)
+                # if i < 10: print(f"Distância entre {label1} e {label2}: {dist:.5f}, threshold: {threshold:.5f}")
                 if dist < threshold:
                     switches += 1
                     # Unifica transitivamente os labels
@@ -169,17 +172,6 @@ class AdaptiveMetric:
 
         return updated_segments
 
-    def are_neighbors(self, segments, label1, label2):
-        """
-        Verifica se dois segmentos são vizinhos.
-        """
-        mask1 = segments == label1
-        mask2 = segments == label2
-        dilated_mask1 = np.pad(mask1, pad_width=1, mode='constant', constant_values=0)
-        dilated_mask2 = np.pad(mask2, pad_width=1, mode='constant', constant_values=0)
-        neighbors = np.logical_and(dilated_mask1[1:-1, 1:-1], dilated_mask2[1:-1, 1:-1])
-        return np.any(neighbors)
-
     def data(self, list):
         """
         Recebe uma lista e mostra histograma, média e desvio padrão.
@@ -188,17 +180,17 @@ class AdaptiveMetric:
         # Calcular média e desvio padrão
         mean_distance = np.mean(list)
         std_distance = np.std(list)
-        print(f"Média: {mean_distance:.5f}")
-        print(f"Desvio padrão: {std_distance:.5f}")
+        print(f"Média: {mean_distance:.3f}")
+        print(f"Desvio padrão: {std_distance:.3f}")
 
         # Criar histograma
         plt.hist(list, bins=30, edgecolor='black')
         plt.title('Histograma dos dados coletados')
         plt.xlabel('Valor')
         plt.ylabel('Frequência')
-        plt.axvline(mean_distance, color='r', linestyle='dashed', linewidth=1, label=f'Média: {mean_distance:.5f}')
-        plt.axvline(mean_distance + std_distance, color='g', linestyle='dashed', linewidth=1, label=f'+1 Desvio Padrão: {mean_distance + std_distance:.5f}')
-        plt.axvline(mean_distance - std_distance, color='g', linestyle='dashed', linewidth=1, label=f'-1 Desvio Padrão: {mean_distance - std_distance:.5f}')
+        plt.axvline(mean_distance, color='r', linestyle='dashed', linewidth=1, label=f'Média: {mean_distance:.3f}')
+        plt.axvline(mean_distance + std_distance, color='g', linestyle='dashed', linewidth=1, label=f'+1 Desvio Padrão: {mean_distance + std_distance:.3f}')
+        plt.axvline(mean_distance - std_distance, color='g', linestyle='dashed', linewidth=1, label=f'-1 Desvio Padrão: {mean_distance - std_distance:.3f}')
         plt.legend()
         plt.show()
 

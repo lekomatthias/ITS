@@ -18,23 +18,40 @@ class SuperpixelClassifier2(SuperpixelClassifier):
     Classificador de superpixels baseado em KNN e cores contrastantes.
     """
 
-    def __init__(self, model_path, new_model=False, LAB=False):
+    def __init__(self,new_model=False, LAB=False, num_segments=100):
         """Inicializa o classificador com um modelo treinado."""
-        self.classifier = PixelClassifier2(model_path=model_path)
-        self.num_classes = self.classifier.get_num_classes()
         self.new_model = new_model
         self.Similar_SP = AdaptiveMetric()
         self.LAB = LAB
+        self.num_segments = num_segments
 
-    def Train(self, master, image):
+    def Load_Image(self):
+        apply_image_path = filedialog.askopenfilename(title="Selecione a imagem para aplicação",
+                                                      filetypes=[("Imagens", "*.jpeg;*.jpg;*.png")])
+        if not apply_image_path:
+            print("Nenhuma imagem selecionada. Encerrando o programa.")
+            return
+        apply_image_dir, apply_image_name = os.path.split(apply_image_path)
+        apply_image_name_no_ext, _ = os.path.splitext(apply_image_name)
+        image = cv2.imread(apply_image_path)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        return image, apply_image_dir, apply_image_name_no_ext
+
+    def Train(self, master):
         """
         Faz o treinamento do modelo MLP.
         """
 
+        image, apply_image_dir, apply_image_name_no_ext = self.Load_Image()
+        
+        segments_path = os.path.join(apply_image_dir, f"segmentos_{apply_image_name_no_ext}_{self.num_segments}.npy")
+
         if not self.new_model: 
             model_path = filedialog.askopenfilename(title="Carregar modelo", filetypes=[("npy", "*.npy")])
+            if not model_path:
+                print("Nenhum modelo selecionado. Encerrando o programa.")
+                return
             self.Similar_SP.load_metric(model_path)
-        segments_path = filedialog.askopenfilename(title="Carregar arquivos de segmentos", filetypes=[("npy", "*.npy")])
         segments = np.load(segments_path)
         if self.LAB:
             img_temp = cv2.cvtColor(image, cv2.COLOR_RGB2LAB)
@@ -63,17 +80,24 @@ class SuperpixelClassifier2(SuperpixelClassifier):
         output_image = image * 0.5 + color_image * 0.5
         return output_image
 
-    def classify(self, image):
+    def classify(self):
         """
         Aplica a classificação aos superpixels da imagem.
         """
 
+        
+        image, apply_image_dir, apply_image_name_no_ext = self.Load_Image()
+
+        segments_path = os.path.join(apply_image_dir, f"segmentos_{apply_image_name_no_ext}_{self.num_segments}.npy")
         # Carregar modelo a partir do caminho especificado
+        print("Selecione o modelo a nível de superpixel para aplicação.")
         model_path = filedialog.askopenfilename(title="Carregar modelo", filetypes=[("npy", "*.npy")])
-        segments_path = filedialog.askopenfilename(title="Carregar arquivos de segmentos", filetypes=[("npy", "*.npy")])
+        if not model_path:
+            print("Nenhum modelo selecionado. Encerrando o programa.")
+            return
+        
         it = time()
         print("Classificando os superpixels...")
-        self.Similar_SP.load_metric(model_path)
         self.Similar_SP.load_metric(model_path)
         segments = np.load(segments_path)
         if self.LAB:
@@ -81,20 +105,37 @@ class SuperpixelClassifier2(SuperpixelClassifier):
             img_temp[:, :, 0] = 0
         else:
             img_temp = image
-        new_segments = self.Similar_SP.classify_image(img_temp, segments, threshold=0.0005)
+        new_segments = self.Similar_SP.classify_image(img_temp, segments, threshold=0.18)
 
         output_image = self.Paint_image(image, new_segments)        
 
         print(f"Tempo para classificar a imagem: {(time()-it):.1f}s")
+
+        # Salvar a imagem classificada
+        output_image = np.clip(output_image, 0, 255)
+        output_image = output_image.astype(np.uint8)
+        output_image = cv2.cvtColor(output_image, cv2.COLOR_RGB2BGR)
+        output_image_path = os.path.join(apply_image_dir, f"{apply_image_name_no_ext}(classified).jpeg")
+        imsave(output_image_path, output_image)
+        print(f"Imagem classificada salva em: {output_image_path}")
+
         return output_image
     
-    def SP_divide(self, image, num_segments=100):
+    def SP_divide(self):
         """
         Aplica a segmentação em superpixels para imagem.
         """
 
-        segments_path = filedialog.asksaveasfilename(title="Caminho para salvar os segmentos",
-                                                    defaultextension=".npy", filetypes=[("npy", "*.npy")])
+        image, apply_image_dir, apply_image_name_no_ext = self.Load_Image()
+        segments_path = os.path.join(apply_image_dir, f"segmentos_{apply_image_name_no_ext}_{self.num_segments}.npy")
+
+        print("Selecione o modelo a nível de pixel para aplicação.")
+        model_path = filedialog.askopenfilename(title="Selecione o modelo para aplicação", filetypes=[("joblib", "*.joblib")])
+        if not model_path:
+            print("Nenhum modelo selecionado. Encerrando o programa.")
+            return
+        classifier = PixelClassifier2(model_path=model_path)
+
         it = time()
         print("Dividindo a imagem em superpixels...")
         # Processamento inicial dos pixels (caso de imagem colorida ou em escala de cinza)
@@ -103,17 +144,15 @@ class SuperpixelClassifier2(SuperpixelClassifier):
         else:
             reshaped_image = image
         
-        results = joblib.Parallel(n_jobs=-1)(joblib.delayed(self.classifier.predict)(pixel) for pixel in reshaped_image)
+        results = joblib.Parallel(n_jobs=-1)(joblib.delayed(classifier.predict)(pixel) for pixel in reshaped_image)
 
         # Reconstrói os resultados para o formato original da imagem
         results = np.array(results).reshape(image.shape[:2])
         # Segmentar a imagem usando SLIC
-        segments = slic(image, n_segments=num_segments, compactness=15, sigma=1, convert2lab=self.LAB, enforce_connectivity=True,
-                        start_label=0, min_size_factor=20e-2, max_size_factor=1e+1, mask=results)
-        np.save(segments_path, segments)
-
+        segments = slic(image, n_segments=self.num_segments, compactness=15, sigma=1, enforce_connectivity=True, # força nada kkkkk
+                        start_label=0, min_size_factor=2e-1, max_size_factor=1e+1, mask=results)
         print(f"Tempo para segmentar a imagem: {(time()-it):.1f}s")
-
+        np.save(segments_path, segments)
 
 def main():
 
@@ -121,49 +160,23 @@ def main():
     train = False
     new_model = True
     LAB = True
-    # quantidade de superpixels
-    sp = 500
+    num_segments = 200
 
-    print("Selecione o modelo a nível de pixel para aplicação.")
-    model_path = filedialog.askopenfilename(title="Selecione o modelo para aplicação", filetypes=[("joblib", "*.joblib")])
-    if not model_path:
-        print("Nenhum modelo selecionado. Encerrando o programa.")
-        return
-    print("Selecione a imagem para aplicação.")
-    apply_image_path = filedialog.askopenfilename(title="Selecione a imagem para aplicação",
-                                                    filetypes=[("Imagens", "*.jpeg;*.jpg;*.png")])
-    if not apply_image_path:
-        print("Nenhuma imagem selecionada. Encerrando o programa.")
-        return
-
-    
-    # Carregar o classificador com o modelo treinado
-    superpixel_classifier = SuperpixelClassifier2(model_path=model_path, new_model=new_model, LAB=LAB)
-    # Carregar a imagem selecionada
-    apply_image = cv2.imread(apply_image_path)
-    apply_image = cv2.cvtColor(apply_image, cv2.COLOR_BGR2RGB)
+    superpixel_classifier = SuperpixelClassifier2(new_model=new_model, LAB=LAB, num_segments=num_segments)
 
     if new_segments:
-        superpixel_classifier.SP_divide(apply_image, num_segments=sp)
+        # Divide a imagem em superpixels e salva o arquivo de segmentos
+        superpixel_classifier.SP_divide()
         return
 
     if train:
+        # Treina a métrica adaptativa e salva o arquivo de modelo
         root = tk.Tk()
         root.withdraw()
-        superpixel_classifier.Train(root, apply_image)
+        superpixel_classifier.Train(root)
     else:
-        # Classificar a imagem usando o classificador de superpixels
-        classified_image = superpixel_classifier.classify(apply_image)
-        # Salvar a imagem classificada
-        classified_image = np.clip(classified_image, 0, 255)
-        classified_image = classified_image.astype(np.uint8)
-        classified_image = cv2.cvtColor(classified_image, cv2.COLOR_RGB2BGR)
-        apply_image_dir, apply_image_name = os.path.split(apply_image_path)
-        apply_image_name_no_ext, apply_image_ext = os.path.splitext(apply_image_name)
-        classified_image_path = os.path.join(apply_image_dir, f"{apply_image_name_no_ext}(classified){apply_image_ext}")
-        imsave(classified_image_path, classified_image)
-        print(f"Imagem classificada salva em: {classified_image_path}")
-        
+        # Classifica a imagem e salva a imagem colorida
+        superpixel_classifier.classify()
 
 if __name__ == "__main__":
     main()
