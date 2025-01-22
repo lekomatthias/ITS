@@ -12,6 +12,7 @@ from knn_apply import SuperpixelClassifier
 from knn_slic import PixelClassifier2
 from agrupador import InteractiveSegmentLabeler
 from AdaptiveMetric import AdaptiveMetric
+from Enforce_connectivity import Enforce_connectivity
 
 class SuperpixelClassifier2(SuperpixelClassifier):
     """
@@ -75,6 +76,9 @@ class SuperpixelClassifier2(SuperpixelClassifier):
         segments = slic(image, n_segments=self.num_segments, compactness=15, sigma=1, enforce_connectivity=True, # força nada kkkkk
                         start_label=0, min_size_factor=2e-1, max_size_factor=1e+1, mask=results)
         print(f"Tempo para segmentar a imagem: {(time()-it):.1f}s")
+        it = time()
+        segments = Enforce_connectivity(segments)
+        print(f"Tempo para garantir conectividade: {(time()-it):.1f}s")
         np.save(segments_path, segments)
 
     def Train(self, master):
@@ -172,16 +176,21 @@ class SuperpixelClassifier2(SuperpixelClassifier):
         imsave(output_image_path, output_image)
         print(f"Imagem classificada salva em: {output_image_path}")
 
+        # Salvar os novos segmentos
+        final_segments_path = os.path.join(apply_image_dir, f"seg_finais_{apply_image_name_no_ext}_{self.num_segments}.npy")
+        np.save(final_segments_path, new_segments)
+        print(f"Novos segmentos salvos em: {final_segments_path}")
+
         return output_image
 
 def main():
 
     new_segments = False
     train = False
-    new_model = False
+    new_model = True
     LAB = True
     num_segments = 200
-    threshold = 4
+    threshold = 5.5
 
     superpixel_classifier = SuperpixelClassifier2(new_model=new_model, LAB=LAB, num_segments=num_segments)
 
