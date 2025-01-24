@@ -10,7 +10,7 @@ from time import time
 
 from knn_apply import SuperpixelClassifier
 from knn_slic import PixelClassifier2
-from agrupador import InteractiveSegmentLabeler
+from SP_grouper import InteractiveSegmentLabeler
 from AdaptiveMetric import AdaptiveMetric
 from Enforce_connectivity import Enforce_connectivity
 
