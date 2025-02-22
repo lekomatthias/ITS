@@ -56,29 +56,24 @@ class AdaptiveMetric:
 
         # Ajuste de labels para que sejam contínuos
         unique_labels, new_labels = np.unique(labels, return_inverse=True)
-        K = len(unique_labels)
 
         # Criar matriz de designação Y
-        Y = np.zeros((n, K))
+        Y = np.zeros((n, len(unique_labels)))
         for i, label in enumerate(new_labels):
             Y[i, label] = 1
-
-        # Calcular centros dos clusters
-        Z = np.zeros((K, d))
-        for k in range(K):
-            indices = np.where(new_labels == k)[0]
-            if len(indices) == 0:
-                continue
-            Z[k, :] = np.mean(X[indices], axis=0)
 
         # Resolver para M1
         X_pinv = np.linalg.pinv(X)
         Y_pinv = np.linalg.pinv(Y)
         M1 = X_pinv @ Y @ Y_pinv @ X_pinv.T
 
-        P = np.diag(np.ones(d))
-        self.M = (P @ M1 @ P.T)*1e+9 # Ajuste de escala
+        # P = np.eye(d)
+        # self.M = (P @ M1 @ P.T)*1e+9 # Ajuste de escala
 
+        # Substituição para diagonalizar
+        eigvals, _ = np.linalg.eig(M1)
+        M1 = np.diag(eigvals)
+        self.M = M1 * 1e+9 # Ajuste de escala
 
     def update_metric_matrix(self, new_superpixels, new_labels, alpha=0.8):
         """
@@ -128,22 +123,20 @@ class AdaptiveMetric:
         flattened_superpixels = np.array([sp[0] for sp in superpixels])
 
         # Encontrar vizinhos usando NearestNeighbors
-        nn = NearestNeighbors(n_neighbors=10, algorithm='ball_tree').fit(flattened_superpixels)
+        nn = NearestNeighbors(n_neighbors=20, algorithm='ball_tree').fit(flattened_superpixels)
         neighbors = nn.kneighbors(flattened_superpixels, return_distance=False)
 
         for i, label1 in enumerate(unique_labels):
             for j in neighbors[i]:
                 label2 = labels[j]
-                if label1 == label2:
-                    continue
+                if label1 == label2: continue
 
                 # Garante que estou verificando todos os segmentos desse label
                 # Além de busrcar o sp relacionado ao label
                 sp1_list = [sp for sp, lbl in zip(superpixels, labels) if lbl == label1]
                 sp2_list = [sp for sp, lbl in zip(superpixels, labels) if lbl == label2]
 
-                if len(sp1_list) == 0 or len(sp2_list) == 0:
-                    continue
+                if len(sp1_list) == 0 or len(sp2_list) == 0: continue
 
                 sp1_pos = np.mean([sp[0] for sp in sp1_list], axis=0)
                 sp1_col = np.mean([sp[1] for sp in sp1_list], axis=0)

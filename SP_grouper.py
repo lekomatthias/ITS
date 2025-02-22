@@ -4,7 +4,7 @@ from PIL import Image, ImageTk
 
 
 class InteractiveSegmentLabeler:
-    def __init__(self, master, image, segments):
+    def __init__(self, image, segments):
         """
         Inicializa o rotulador interativo de segmentos.
         """
@@ -23,8 +23,9 @@ class InteractiveSegmentLabeler:
         # Ajusta a escala da imagem para altura fixa
         self.display_image, self.scale_factor = self._resize_image(self.processed_image, target_height=600)
 
-        # Referência à janela principal (já existente)
-        self.master = master
+        
+        self.master = tk.Tk()
+        self.master.withdraw()
         self.master.deiconify()
         self.master.title("Seleção de Segmentos")
 
