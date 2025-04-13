@@ -1,7 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.neighbors import NearestNeighbors
-from time import time
+
+from timing import timing
 
 class AdaptiveMetric:
     def __init__(self):
@@ -106,13 +107,12 @@ class AdaptiveMetric:
         dist = np.sqrt(diff.T @ self.M @ diff)
         return float(dist)
 
-
+    @timing
     def merge_similar_segments(self, segments, superpixels, labels, threshold, show_data=False):
         """
         Mescla superpixels semelhantes com base na distância de Mahalanobis.
         Compara apenas segmentos vizinhos.
         """
-        it = time()
         unique_labels = np.unique(labels)
         label_map = {label: label for label in unique_labels}
 
@@ -145,7 +145,7 @@ class AdaptiveMetric:
 
                 dist = self.mahalanobis_distance([sp1_pos, sp1_col], [sp2_pos, sp2_col])
                 distances.append(dist)
-                # if i < 10: print(f"Distância entre {label1} e {label2}: {dist:.5f}, threshold: {threshold:.5f}")
+
                 if dist < threshold:
                     switches += 1
                     # Unifica transitivamente os labels
@@ -163,7 +163,6 @@ class AdaptiveMetric:
 
         print(f"Antes: {len(np.unique(segments))} segmentos")
         print(f"Depois: {len(np.unique(updated_segments))} segmentos (com {switches} trocas)")
-        print(f"Tempo para mesclar segmentos: {(time()-it):.1f}s")
         if show_data: self.data(distances)
 
         return updated_segments

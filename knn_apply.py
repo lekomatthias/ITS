@@ -1,12 +1,12 @@
 import numpy as np
 import cv2
 import os
-from skimage.segmentation import slic
 import joblib
-from skimage.io import imsave
 import matplotlib.pyplot as plt
-from collections import Counter
 import tkinter as tk
+from skimage.segmentation import slic
+from skimage.io import imsave
+from collections import Counter
 from tkinter import filedialog
 from time import time
 

@@ -10,6 +10,7 @@ from tkinter import filedialog
 from time import time
 
 from knn_apply import PixelClassifier, SuperpixelClassifier
+from timing import timing
 
 class PixelClassifier2(PixelClassifier):
 
@@ -29,6 +30,7 @@ class SuperpixelClassifier2(SuperpixelClassifier):
         self.classifier = PixelClassifier2(model_path=model_path)
         self.num_classes = self.classifier.get_num_classes()
 
+    @timing
     def classify(self, image, num_segments=100):
         """Aplica a classificação aos superpixels da imagem."""
         # Carregar modelo a partir do caminho especificado

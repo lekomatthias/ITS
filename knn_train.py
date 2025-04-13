@@ -1,9 +1,9 @@
 import tkinter as tk
+import numpy as np
+import joblib
 from tkinter import filedialog
 from PIL import Image, ImageTk
-import numpy as np
 from sklearn.neighbors import KDTree
-import joblib
 
 # Variáveis globais
 points = []
