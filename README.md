@@ -14,4 +14,5 @@ Obs.: A estrutura a partir de onde a imagem base está deve ter as pastas:
  - segmentos
  - mascaras
  - metricas
+   
 O modelo knn fica no local das imagens e é selecionado pelo usuário.
