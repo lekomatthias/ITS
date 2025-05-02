@@ -4,7 +4,7 @@ from core import *
 
 if __name__ == "__main__":
 
-    classifier = ClusteringClassifier2(num_segments=200)
+    classifier = ClusteringClassifier(num_segments=200)
     # classifier.SP_divide()
     # classifier.Train()
     # classifier.classify(threshold=5.8, show_data=False)
