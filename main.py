@@ -4,6 +4,7 @@ from core import *
 
 if __name__ == "__main__":
 
+    # knn_train()
     classifier = ClusteringClassifier(num_segments=200)
     # classifier.SP_divide()
     # classifier.Train()
