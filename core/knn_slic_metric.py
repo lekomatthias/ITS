@@ -10,7 +10,7 @@ from time import time
 from core.knn_apply import SuperpixelClassifier
 from core.knn_slic import PixelClassifier2
 from util import InteractiveSegmentLabeler
-from core.AdaptiveMetric import AdaptiveMetric
+from util.AdaptiveMetric import AdaptiveMetric
 from util import Enforce_connectivity
 from util.timing import timing
 from util import GetPixelsOfArea

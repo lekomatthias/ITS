@@ -8,7 +8,7 @@ from sklearn.cluster import DBSCAN
 from sklearn.cluster import KMeans
 
 from core.knn_slic_metric import SuperpixelClassifier2
-from core.AdaptiveMetric import AdaptiveMetric
+from util.AdaptiveMetric import AdaptiveMetric
 from util.timing import timing
 
 os.environ["LOKY_MAX_CPU_COUNT"] = "11"
