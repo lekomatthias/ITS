@@ -45,10 +45,8 @@ def PreProcessor(image_path):
 
     images_path = []
     for file in os.listdir(base_path):
-        if file.lower().endswith(('.jpeg', '.jpg', '.png')) and file != os.path.basename(image_path):
+        if file.lower().endswith(('.jpeg', '.jpg', '.png')):
             images_path.append(os.path.join(base_path, file))
-    if image_path not in images_path:
-        images_path.append(image_path)
 
     for path in images_path:
         try:
