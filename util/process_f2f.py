@@ -1,5 +1,6 @@
 
 import os
+import cv2
 from tkinter import filedialog
 
 def Process_f2f(process_func, save_func, type_in="csv", type_out="npy"):
@@ -30,12 +31,14 @@ def Process_f2f(process_func, save_func, type_in="csv", type_out="npy"):
             continue
         new_path = os.path.join(output_dir, os.path.basename(path).replace(type_in, type_out))
 
+        if type_out == "jpg":
+            img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
         save_func(new_path, img)
         print(f"arquivo salvo em: {new_path}")
 
 
 if __name__ == "__main__":
-    from matplotlib.pyplot import imsave
+    from skimage.io import imsave
     from numpy import save as np_save
     from CSV2JPG import CSV2JPG
     from CSV2segments import CSV2segments

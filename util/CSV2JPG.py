@@ -1,6 +1,7 @@
 
 import csv
 import random
+import numpy as np
 from PIL import Image
 
 def Color_gen():
@@ -28,6 +29,7 @@ def CSV2JPG(path):
             label = int(value)
             color = colors[label]
             image.putpixel((x, y), color)
+    image = np.array(image, np.uint8)
 
     return image
 
