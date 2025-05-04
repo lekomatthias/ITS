@@ -15,11 +15,7 @@ def Process_f2f(process_func, save_func, type_in="csv", type_out="npy"):
 
     images_path = []
     for file in os.listdir(folder_path):
-        if (type_in == "jpg" or type_in == "jpeg") and file.lower().endswith(('.jpeg', '.jpg')):
-            images_path.append(os.path.join(folder_path, file))
-        if type_in == "png" and file.lower().endswith(('.png')):
-            images_path.append(os.path.join(folder_path, file))
-        if type_in == "csv" and file.lower().endswith(('.csv')):
+        if file.lower().endswith((f".{type_in}")):
             images_path.append(os.path.join(folder_path, file))
 
     for path in images_path:
@@ -27,7 +23,7 @@ def Process_f2f(process_func, save_func, type_in="csv", type_out="npy"):
         try:
             img = process_func(path)
         except Exception as e:
-            print(f"Erro ao processar o arquivo: {path}, erro : {e}")
+            print(f"Erro ao processar o arquivo: {path}\n -- {e}")
             continue
         new_path = os.path.join(output_dir, os.path.basename(path).replace(type_in, type_out))
 
@@ -42,6 +38,10 @@ if __name__ == "__main__":
     from numpy import save as np_save
     from CSV2JPG import CSV2JPG
     from CSV2segments import CSV2segments
+    from JPG2segments import JPG2segments
+    from segments2JPG import segments2JPG
 
     # Process_f2f(CSV2segments, np_save)
-    Process_f2f(CSV2JPG, imsave, type_in="csv", type_out="jpg")
+    # Process_f2f(CSV2JPG, imsave, type_in="csv", type_out="jpg")
+    Process_f2f(JPG2segments, np_save, type_in="jpg", type_out="npy")
+    # Process_f2f(segments2JPG, imsave, type_in="npy", type_out="jpg")
