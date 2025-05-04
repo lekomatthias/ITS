@@ -128,7 +128,6 @@ class ClusteringClassifier(SuperpixelClassifier2):
         """
         Retorna o rótulo do segmento zero após a junção dos segmentos.
         """
-
         zero_mask = segments == 0
         new_zero_label = new_segments[zero_mask][0]
         if new_zero_label != 0:
@@ -167,7 +166,7 @@ class ClusteringClassifier(SuperpixelClassifier2):
         return sp_list
 
     @timing
-    def Type_classification(self, image, segments, method='KMeans', eps=0.5, show_inertia=False):
+    def Type_classification(self, image, segments, method='KMeans', show_inertia=False):
         """
         Aplica o método de classificação especificado (DBSCAN ou KMeans) para classificar os superpixels.
         """
@@ -192,7 +191,7 @@ class ClusteringClassifier(SuperpixelClassifier2):
         return combined_segments, labels
 
     @timing
-    def Type_visualization(self, image_path=None, method='KMeans', eps=0.5, show_inertia=False):
+    def Type_visualization(self, image_path=None, method='KMeans', show_inertia=False):
         """
         Visualiza a segmentação de superpixels com o método especificado (DBSCAN ou KMeans), colorindo uma imagem.
         """
@@ -210,7 +209,7 @@ class ClusteringClassifier(SuperpixelClassifier2):
         segments = np.load(segments_path)
 
         # pega a divisão de superpixels do método especificado
-        segments_classified, labels = self.Type_classification(image, segments, method=method, eps=eps, show_inertia=show_inertia)
+        segments_classified, labels = self.Type_classification(image, segments, method=method, show_inertia=show_inertia)
         print(f"Número de clusters obtidos: {len(np.unique(labels))}") 
         print(f"De um total de: {len(np.unique(segments))} segmentos iniciais")
         output_image = self.Paint_image(image, segments_classified)  

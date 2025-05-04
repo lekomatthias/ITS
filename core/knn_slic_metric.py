@@ -91,12 +91,15 @@ class SuperpixelClassifier2(SuperpixelClassifier):
             reshaped_image = image.reshape((-1, image.shape[-1]))
         else:
             reshaped_image = image
-        
-        results = joblib.Parallel(n_jobs=-1)(joblib.delayed(classifier.predict)(pixel) for pixel in reshaped_image)
 
-        # Reconstrói os resultados para o formato original da imagem
-        results = np.array(results).reshape(image.shape[:2])
-        np.save(mask_path, results)
+        if os.path.exists(mask_path):
+            print(f"Máscara já existe em {mask_path}. Carregando...")
+            results = np.load(mask_path)
+        else:
+            results = joblib.Parallel(n_jobs=-1)(joblib.delayed(classifier.predict)(pixel) for pixel in reshaped_image)
+            # Reconstrói os resultados para o formato original da imagem
+            results = np.array(results).reshape(image.shape[:2])
+            np.save(mask_path, results)
 
         if auto_num_segments:
             self.num_segments = int(np.count_nonzero(results) // pix)
@@ -117,6 +120,7 @@ class SuperpixelClassifier2(SuperpixelClassifier):
             results = cv2.resize(results.astype(np.uint8), (original_size[1], original_size[0]), interpolation=cv2.INTER_NEAREST)
             print(f"Segmentos e máscara redimensionados para o tamanho original {original_size[1]}x{original_size[0]}.")
 
+        segments = self.First2Zero(segments)
         self.Create_image_with_segments(mask_path)
         np.save(segments_path, segments)
 
@@ -195,8 +199,8 @@ class SuperpixelClassifier2(SuperpixelClassifier):
             img_temp = image
         new_segments = self.Similar_SP.classify_image(img_temp, segments, threshold=threshold,
                                                       show_data=show_data)
+        
         new_segments = self.First2Zero(new_segments)
-
         output_image = self.Paint_image(image, new_segments)        
 
         # Salvar a imagem classificada

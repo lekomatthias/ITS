@@ -11,8 +11,7 @@ def JPG2segments(path):
 
     _, inverse = np.unique(packed, return_inverse=True)
     segments = inverse.reshape(image.shape[:2]) + 1
-    
-    print(f"Valores únicos: {np.unique(segments)}")
+
     return segments
 
 

@@ -43,7 +43,6 @@ class ClusteringClassifier2(ClusteringClassifier):
                 model.fit(sp_list)
                 distortions.append(model.inertia_)
         elif algorithm_name == "AgglomerativeClustering":
-            from sklearn.metrics import pairwise_distances
             for k in k_values:
                 model = AgglomerativeClustering(n_clusters=k)
                 model.fit(sp_list)
@@ -128,11 +127,11 @@ class ClusteringClassifier2(ClusteringClassifier):
         return optimal_k
     
     @timing
-    def Type_classification(self, image, segments, method='KMeans', eps=0.5, show_inertia=False):
+    def Type_classification(self, image, segments, method='KMeans', show_inertia=False):
         """
         Aplica o método de classificação especificado (DBSCAN ou KMeans) para classificar os superpixels.
         """
-        
+        # print(segments)
         print(f"Classificando em tipos similares com o método {method}...")
         sp_list = self.Get_SP_list(image, segments)
         

@@ -11,6 +11,7 @@ def generate_contrasting_colors(num_colors):
         # Garantir que há cores suficientes
         cmap = plt.get_cmap('tab20')
         colors = [np.array(cmap(i % 20)[:3]) * 255 for i in range(num_colors)]
+        colors[0] = np.array([0, 0, 0])
         return colors
 
 def Paint_image(image, segments):
@@ -19,8 +20,6 @@ def Paint_image(image, segments):
     """
 
     colors = generate_contrasting_colors(len(np.unique(segments)))
-    # cor preta para classe NIO
-    colors[0] = np.array([0, 0, 0])
     color_image = np.zeros(image.shape)
     for segment_value, color in zip(np.unique(segments), colors):
         color_image[segments == segment_value] = color
