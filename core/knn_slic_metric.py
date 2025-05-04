@@ -14,6 +14,8 @@ from util.AdaptiveMetric import AdaptiveMetric
 from util import Enforce_connectivity
 from util.timing import timing
 from util import GetPixelsOfArea
+from util.File_manager import Load_Image, Save_image
+from util.Image_manager import Paint_image, Create_image_with_segments
 
 class SuperpixelClassifier2(SuperpixelClassifier):
     """
@@ -27,67 +29,17 @@ class SuperpixelClassifier2(SuperpixelClassifier):
         self.Similar_SP = AdaptiveMetric()
         self.LAB = LAB
         self.num_segments = num_segments
-
-    def create_folders(self, root_path, folder_names=["metricas", "mascaras", "segmentos", "classificadas"]):
-        """
-        Cria várias pastas dentro de um diretório base.
-        """
-        root_path = os.path.normpath(root_path)
-
-        for name in folder_names:
-            folder_path = os.path.join(root_path, name)
-            if not os.path.exists(folder_path):
-                os.makedirs(folder_path)
-        
-    @timing
-    def Load_Image(self, apply_image_path=None):
-        """
-        Carrega a imagem para aplicação.
-        """
-        try:
-            if apply_image_path is None:
-                apply_image_path = filedialog.askopenfilename(
-                    title="Selecione a imagem para aplicação",
-                    filetypes=[("Imagens", "*.jpeg;*.jpg;*.png;*.JPEG;*.JPG;*.PNG")]
-                )
-            if not apply_image_path:
-                raise FileNotFoundError("Imagem não selecionada.")
-
-            apply_image_path = os.path.normpath(apply_image_path)
-            if not os.path.isfile(apply_image_path):
-                # Tenta encontrar o mesmo nome com extensão diferente
-                directory, filename = os.path.split(apply_image_path)
-                name_no_ext, _ = os.path.splitext(filename)
-                possible_exts = ['.jpg', '.jpeg', '.png', '.JPG', '.JPEG', '.PNG']
-                found = False
-                for ext in possible_exts:
-                    candidate = os.path.join(directory, name_no_ext + ext)
-                    if os.path.isfile(candidate):
-                        apply_image_path = candidate
-                        found = True
-                        break
-                if not found:
-                    raise FileNotFoundError(f"Arquivo não encontrado: {apply_image_path}")
-
-            # Verifica extensão
-            valid_extensions = ('.png', '.jpg', '.jpeg')
-            if not apply_image_path.lower().endswith(valid_extensions):
-                raise ValueError("Extensão inválida para imagem.")
-
-        except (FileNotFoundError, ValueError) as e:
-            print(f"{e}\nEncerrando o programa.")
-            exit()
-        except Exception as e:
-            print(f"[ERRO INESPERADO] {e}\nEncerrando o programa.")
-            exit()
-
-        apply_image_dir, apply_image_name = os.path.split(apply_image_path)
-        self.create_folders(apply_image_dir)
-        apply_image_name_no_ext, _ = os.path.splitext(apply_image_name)
-        image = cv2.imread(apply_image_path)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        return image, apply_image_dir, apply_image_name_no_ext
     
+    # ajuste pra organizar o código mas não ajustar todos os códigos posteriores
+    def Load_Image(self, apply_image_path=None):
+        return Load_Image(apply_image_path=apply_image_path)
+    def Save_image(self, image, apply_image_dir, apply_image_name_no_ext, image_type="classified"):
+        return Save_image(image, apply_image_dir, apply_image_name_no_ext, self.num_segments, image_type)
+    def Paint_image(self, image, segments):
+        return Paint_image(image, segments)
+    def Create_image_with_segments(self, seg_path=None):
+        return Create_image_with_segments(seg_path=seg_path)
+
     def First2Zero(self, segments):
         init = segments[0, 0]
         if init == 0: return segments
@@ -102,7 +54,7 @@ class SuperpixelClassifier2(SuperpixelClassifier):
         Aplica a segmentação em superpixels para imagem.
         """
 
-        image, apply_image_dir, apply_image_name_no_ext = self.Load_Image(image_path)
+        image, apply_image_dir, apply_image_name_no_ext = Load_Image(image_path)
 
         # Verifica se a imagem é muito grande e redimensiona
         original_size = image.shape[:2]
@@ -173,10 +125,10 @@ class SuperpixelClassifier2(SuperpixelClassifier):
         Faz o treinamento da matriz métrica.
         """
 
-        image, apply_image_dir, apply_image_name_no_ext = self.Load_Image(image_path)
+        image, apply_image_dir, apply_image_name_no_ext = Load_Image(image_path)
         
         segments_path = os.path.join(apply_image_dir, "segmentos",
-                                     f"seg_DBSCAN_{apply_image_name_no_ext}_{self.num_segments}.npy")
+                                     f"segmentos_{apply_image_name_no_ext}_{self.num_segments}.npy")
         if not os.path.exists(segments_path):
             self.SP_divide(image_path=image_path)
 
@@ -209,40 +161,12 @@ class SuperpixelClassifier2(SuperpixelClassifier):
         return metric_path
 
     @timing
-    def Paint_image(self, image, segments):
-        """
-        Gerar imagem colorida para visualização
-        """
-
-        self.colors = self.generate_contrasting_colors(len(np.unique(segments)))
-        # cor preta para classe NIO
-        self.colors[0] = np.array([0, 0, 0])
-        color_image = np.zeros(image.shape)
-        for segment_value, color in zip(np.unique(segments), self.colors):
-            color_image[segments == segment_value] = color
-        output_image = image * 0.3 + color_image * 0.7
-        return output_image
-    
-    def Save_image(self, output_image, apply_image_dir, apply_image_name_no_ext, type="classified"):
-        """
-        Salva a imagem.
-        """
-
-        output_image = np.clip(output_image, 0, 255)
-        output_image = output_image.astype(np.uint8)
-        output_image = cv2.cvtColor(output_image, cv2.COLOR_RGB2BGR)
-        output_image_path = os.path.join(apply_image_dir, "classificadas",
-                                         f"({type}){apply_image_name_no_ext}_{self.num_segments}.jpeg")
-        imsave(output_image_path, output_image)
-        print(f"Imagem classificada salva em: {output_image_path}")
-
-    @timing
     def classify(self, threshold=1, image_path=None, show_data=False):
         """
         Aplica a classificação aos superpixels da imagem.
         """
         
-        image, apply_image_dir, apply_image_name_no_ext = self.Load_Image(image_path)
+        image, apply_image_dir, apply_image_name_no_ext = Load_Image(image_path)
 
         segments_path = os.path.join(apply_image_dir, "segmentos",
                                      f"segmentos_{apply_image_name_no_ext}_{self.num_segments}.npy")
@@ -276,7 +200,7 @@ class SuperpixelClassifier2(SuperpixelClassifier):
         output_image = self.Paint_image(image, new_segments)        
 
         # Salvar a imagem classificada
-        self.Save_image(output_image, apply_image_dir, apply_image_name_no_ext, "classified")
+        Save_image(output_image, apply_image_dir, apply_image_name_no_ext, self.num_segments, "classified")
 
         # Salvar os novos segmentos
         final_segments_path = os.path.join(apply_image_dir, "segmentos",
@@ -284,37 +208,6 @@ class SuperpixelClassifier2(SuperpixelClassifier):
         np.save(final_segments_path, new_segments)
         print(f"Novos segmentos salvos em: {final_segments_path}")
 
-        return output_image
-    
-    def Create_image_with_segments(self, seg_path=None):
-        """
-        Cria uma imagem com os segmentos coloridos.
-        """
-
-        if not seg_path:
-            base_dir = os.path.dirname(os.path.abspath(__file__))
-            segment_dir = os.path.join(base_dir, "segmentos")
-            initial_dir = segment_dir if os.path.exists(segment_dir) else base_dir
-            seg_path = filedialog.askopenfilename(initialdir=initial_dir,
-                                                title="Selecione os segmentos para criação da imagem",
-                                                filetypes=[("npy", "*.npy")])
-        
-        if not seg_path or not os.path.exists(seg_path):
-            print("Nenhum segmento selecionado. Encerrando o programa.")
-            exit()
-        seg_dir, seg_name = os.path.split(seg_path)
-        seg_name = seg_name.replace(".npy", "")
-
-        segments = np.load(seg_path)
-        output_image = np.zeros((*segments.shape, 3), dtype=np.uint8)
-        if len(np.unique(segments)) == 2: colors = [(0, 0, 0), (255, 255, 255)]
-        else: colors = self.generate_contrasting_colors(len(np.unique(segments)))
-        segments = segments.astype(int)
-        for segment_value, color in zip(np.unique(segments), colors):
-            output_image[segments == segment_value] = color
-        output_image = cv2.cvtColor(output_image, cv2.COLOR_RGB2BGR)
-        imsave(os.path.join(seg_dir, f"{seg_name}_color.jpeg"), output_image)
-        print(f"Imagem com segmentos coloridos salva em: {os.path.join(seg_dir, f'{seg_name}_color.jpeg')}")
         return output_image
 
 def main():

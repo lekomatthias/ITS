@@ -43,5 +43,5 @@ if __name__ == "__main__":
 
     # Process_f2f(CSV2segments, np_save)
     # Process_f2f(CSV2JPG, imsave, type_in="csv", type_out="jpg")
-    Process_f2f(JPG2segments, np_save, type_in="jpg", type_out="npy")
+    Process_f2f(JPG2segments, np_save, type_in="jpg", type_out="npy") # precisa de melhoria
     # Process_f2f(segments2JPG, imsave, type_in="npy", type_out="jpg")

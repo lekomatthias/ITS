@@ -2,13 +2,14 @@ import numpy as np
 import cv2
 import os
 import joblib
-import matplotlib.pyplot as plt
 import tkinter as tk
 from skimage.segmentation import slic
 from skimage.io import imsave
 from collections import Counter
 from tkinter import filedialog
 from time import time
+
+from util.Image_manager import generate_contrasting_colors
 
 # Define o limite máximo de núcleos lógicos
 os.environ["LOKY_MAX_CPU_COUNT"] = "12"
@@ -52,12 +53,10 @@ class SuperpixelClassifier:
         self.num_classes = self.classifier.get_num_classes()
         self.colors = self.generate_contrasting_colors(self.num_classes)
 
+    # ajuste de código legado
     def generate_contrasting_colors(self, num_colors):
         """Gera cores contrastantes para diferentes classes."""
-        # Garantir que há cores suficientes
-        cmap = plt.get_cmap('tab20')
-        colors = [np.array(cmap(i % 20)[:3]) * 255 for i in range(num_colors)]
-        return colors
+        return generate_contrasting_colors(num_colors)
 
     def classify(self, image, num_segments=100):
         """Aplica a classificação aos superpixels da imagem."""

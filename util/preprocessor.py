@@ -4,13 +4,11 @@ from PIL import Image
 
 # load image
 def load_image(image_path):
-    image = Image.open(image_path)
-    return np.array(image)
+    return np.array(Image.open(image_path))
 
 # load mask em formato numpy array
 def load_mask(mask_path):
-    mask = np.load(mask_path)
-    return mask
+    return np.load(mask_path)
 
 # multiplica as matrizes imagem e márcara
 def multiply_image_and_mask(image, mask):
@@ -38,9 +36,9 @@ def get_maskared_image(image_path):
     mask = load_mask(find_mask_path(image_path))
     return multiply_image_and_mask(image, mask)
 
-def PreProcessor(image_path):
-    base_path = os.path.dirname(image_path)
-    output_dir = os.path.join(base_path, "pre_processadas")
+def PreProcessor(dir_path, folder_path="pre_processadas"):
+    base_path = dir_path
+    output_dir = os.path.join(base_path, folder_path)
     os.makedirs(output_dir, exist_ok=True)
 
     images_path = []
@@ -61,8 +59,7 @@ if __name__ == "__main__":
     from tkinter import filedialog
     import matplotlib.pyplot as plt
 
-    path = filedialog.askopenfilename(title="Selecione a imagem para aplicação",
-                                                            filetypes=[("Imagens", "*.jpeg;*.jpg;*.png")])
+    path = filedialog.askdirectory(title="Selecione a pasta para aplicação de entrada")
     # img = get_maskared_image(path)
     # # mostra a imagem gerada
     # plt.imshow(img)
