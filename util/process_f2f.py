@@ -10,7 +10,7 @@ def Process_f2f(process_func, save_func, type_in="csv", type_out="npy"):
 
     folder_path = filedialog.askdirectory(title="Selecione a pasta para aplicação de entrada")
     base_path = os.path.dirname(folder_path)
-    output_dir = os.path.join(base_path, f"processadas_{type_in}_{type_out}")
+    output_dir = os.path.join(base_path, f"{os.path.basename(folder_path)}_{type_in}_{type_out}")
     os.makedirs(output_dir, exist_ok=True)
 
     images_path = []
@@ -42,6 +42,6 @@ if __name__ == "__main__":
     from segments2JPG import segments2JPG
 
     # Process_f2f(CSV2segments, np_save)
-    # Process_f2f(CSV2JPG, imsave, type_in="csv", type_out="jpg")
-    Process_f2f(JPG2segments, np_save, type_in="jpg", type_out="npy") # precisa de melhoria
+    Process_f2f(CSV2JPG, imsave, type_in="csv", type_out="jpg")
+    # Process_f2f(JPG2segments, np_save, type_in="jpg", type_out="npy") # precisa de melhoria
     # Process_f2f(segments2JPG, imsave, type_in="npy", type_out="jpg")

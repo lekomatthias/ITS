@@ -3,7 +3,6 @@ import cv2
 import os
 import joblib
 from skimage.segmentation import slic
-from skimage.io import imsave
 from tkinter import filedialog
 from time import time
 
@@ -108,6 +107,11 @@ class SuperpixelClassifier2(SuperpixelClassifier):
         # Segmentar a imagem usando SLIC
         segments = slic(image, n_segments=self.num_segments, compactness=15, sigma=1,
                         start_label=0, min_size_factor=2e-1, max_size_factor=1e+1, mask=results)
+        
+        # segments = np.load("C:/Users/lekom/Downloads/TG/img/ers_csv_npy/dji_2024d.npy")
+        # segments = segments*np.load("C:/Users/lekom/Downloads/TG/img/mascaras/mask_dji_2024d.npy")
+        # print("multiplicado")
+
         print(f"Tempo para segmentar a imagem: {(time()-it):.1f}s")
         it = time()
         # Esta função decide se todos os segmentos devem realmente ser conectados.
@@ -120,7 +124,6 @@ class SuperpixelClassifier2(SuperpixelClassifier):
             results = cv2.resize(results.astype(np.uint8), (original_size[1], original_size[0]), interpolation=cv2.INTER_NEAREST)
             print(f"Segmentos e máscara redimensionados para o tamanho original {original_size[1]}x{original_size[0]}.")
 
-        segments = self.First2Zero(segments)
         self.Create_image_with_segments(mask_path)
         np.save(segments_path, segments)
 
@@ -213,32 +216,3 @@ class SuperpixelClassifier2(SuperpixelClassifier):
         print(f"Novos segmentos salvos em: {final_segments_path}")
 
         return output_image
-
-def main():
-    new_segments = False
-    train = False
-    new_model = True
-    LAB = True
-    num_segments = 200
-    threshold = 5.8
-
-    superpixel_classifier = SuperpixelClassifier2(new_model=new_model, LAB=LAB, num_segments=num_segments)
-
-    # superpixel_classifier.Create_image_with_segments()
-    # exit()
-
-    if new_segments:
-        # Divide a imagem em superpixels e salva o arquivo de segmentos
-        superpixel_classifier.SP_divide()
-        return
-
-    if train:
-        # Treina a métrica adaptativa e salva o arquivo de modelo
-        superpixel_classifier.Train()
-    else:
-        # Classifica a imagem e salva a imagem colorida
-        superpixel_classifier.classify(threshold, show_data=False)
-
-if __name__ == "__main__":
-    main()
-

@@ -1,12 +1,8 @@
 import numpy as np
-import cv2
 import os
 import joblib
-import tkinter as tk
 from skimage.segmentation import slic
-from skimage.io import imsave
 from collections import Counter
-from tkinter import filedialog
 from time import time
 
 from util.Image_manager import generate_contrasting_colors
@@ -95,39 +91,3 @@ class SuperpixelClassifier:
         print(f"tempo para classificar a imagem: {(time()-it):.1f}s")
         return output_image
 
-def main():
-
-    root = tk.Tk()
-    root.withdraw()
-
-    model_path = filedialog.askopenfilename(title="Selecione o modelo para aplicação", filetypes=[("joblib", "*.joblib")])
-
-    # Carregar o classificador com o modelo treinado
-    superpixel_classifier = SuperpixelClassifier(model_path=model_path)
-
-    print("Selecione a imagem para aplicação.")
-    apply_image_path = filedialog.askopenfilename(title="Selecione a imagem para aplicação", filetypes=[("Imagens", "*.jpeg;*.jpg;*.png")])
-    if not apply_image_path:
-        print("Nenhuma imagem selecionada. Encerrando o programa.")
-        exit()
-
-    # Carregar a imagem selecionada
-    apply_image = cv2.imread(apply_image_path)
-    apply_image = cv2.cvtColor(apply_image, cv2.COLOR_BGR2RGB)
-
-    # Classificar a imagem usando o classificador de superpixels
-    print("Processando dados...")
-    classified_image = superpixel_classifier.classify(apply_image, num_segments=30)
-
-    # Salvar a imagem classificada
-    classified_image = np.clip(classified_image, 0, 255)  # Garante valores no intervalo [0, 255]
-    classified_image = classified_image.astype(np.uint8)  # Converte para CV_8U
-    classified_image = cv2.cvtColor(classified_image, cv2.COLOR_RGB2BGR)
-    apply_image_dir, apply_image_name = os.path.split(apply_image_path)
-    apply_image_name_no_ext, apply_image_ext = os.path.splitext(apply_image_name)
-    classified_image_path = os.path.join(apply_image_dir, f"{apply_image_name_no_ext}(classified){apply_image_ext}")
-    imsave(classified_image_path, classified_image)
-    print(f"Imagem classificada salva em: {classified_image_path}")
-
-if __name__ == "__main__":
-    main()

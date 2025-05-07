@@ -15,8 +15,6 @@ class knn_train:
         self.canvas = None
         self.R = 3
 
-        self.run()
-
     def load_image(self):
         filepath = filedialog.askopenfilename(filetypes=[("Image files", "*.jpg;*.jpeg;*.png;*.bmp")])
         if filepath:
@@ -154,4 +152,5 @@ class knn_train:
         root.mainloop()
 
 if __name__ == "__main__":
-    knn_train()
+    train = knn_train()
+    train.run()

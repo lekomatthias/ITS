@@ -221,12 +221,3 @@ class ClusteringClassifier(SuperpixelClassifier2):
         f"seg_{method}_{apply_image_name_no_ext}_{self.num_segments}.npy")
         np.save(segments_classified_path, segments_classified)
 
-if __name__ == "__main__":
-    
-    classifier = ClusteringClassifier(num_segments=200)
-    # classifier.SP_divide()
-    # classifier.Train()
-    # classifier.classify(threshold=5.8, show_data=False)
-
-    classifier.Type_visualization(method="KMeans", show_inertia=False)
-

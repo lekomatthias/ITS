@@ -12,7 +12,6 @@ from sklearn.exceptions import ConvergenceWarning
 import warnings
 import skfuzzy as fuzz
 from minisom import MiniSom
-from tkinter import filedialog
 
 from util.timing import timing
 from core.knn_slic_metric_clustering import ClusteringClassifier
@@ -192,46 +191,3 @@ class ClusteringClassifier2(ClusteringClassifier):
         combined_segments = self.Clusters2segments(segments, labels)
         combined_segments = self.First2Zero(combined_segments)
         return combined_segments, labels
-    
-def main():
-    classifier = ClusteringClassifier2(num_segments=200)
-    # classifier.SP_divide()
-    # classifier.Train()
-    # classifier.classify(threshold=5.8, show_data=False)
-    path = filedialog.askopenfilename(title="Selecione a imagem para aplicação",
-                                                            filetypes=[("Imagens", "*.jpeg;*.jpg;*.png")])
-    alg_list = [
-    "DBSCAN", 
-     "KMeans", 
-     "AgglomerativeClustering", 
-     "OPTICS", 
-     "AffinityPropagation", 
-     "MeanShift", 
-     "GaussianMixture", 
-     "Birch", 
-     "FuzzyCMeans", 
-     "SOM"
-     ]
-    for alg in alg_list: 
-        classifier.Type_visualization(image_path=path, method=alg, show_inertia=False)
-
-if __name__ == "__main__":
-    
-    main()
-    # classifier.Type_visualization(image_path=path, method='DBSCAN', show_inertia=False)
-
-
-    """
-    nomes dos métodos implementados:
-    DBSCAN
-    KMeans
-    AgglomerativeClustering
-    OPTICS
-    AffinityPropagation
-    MeanShift
-    GaussianMixture
-    Birch
-    FuzzyCMeans
-    SOM
-    """
-
