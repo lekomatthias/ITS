@@ -1,6 +1,9 @@
 import numpy as np
 from scipy.ndimage import label
 
+from util.timing import timing
+
+@timing
 def Enforce_connectivity(segments):
     structure = np.array([[0, 1, 0],
                           [1, 1, 1],
@@ -10,7 +13,7 @@ def Enforce_connectivity(segments):
     segments = segments.copy()
 
     for segment_id in np.unique(segments):
-        if segment_id == -1: continue
+        if segment_id <= 0: continue
         mask = segments == segment_id
         labeled_array, num_features = label(mask, structure=structure)
         if num_features <= 1: continue
