@@ -5,14 +5,8 @@ from skimage.segmentation import slic
 from tkinter import filedialog
 
 from core.MaskClassifier import MaskClassifier
-from util import InteractiveSegmentLabeler
-from util.AdaptiveMetric import AdaptiveMetric
-from util import Enforce_connectivity
+from util import *
 from util.timing import timing
-from util import GetPixelsOfArea
-from util.File_manager import Load_Image, Save_image
-from util.Image_manager import Paint_image
-from util.Segments_manager import First2Zero
 
 class SuperpixelClassifier:
     """

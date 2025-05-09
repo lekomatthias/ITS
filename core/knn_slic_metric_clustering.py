@@ -9,9 +9,7 @@ from sklearn.cluster import KMeans
 
 from core.knn_slic_metric import SuperpixelClassifier
 from util.timing import timing
-from util.File_manager import Load_Image, Save_image
-from util.Image_manager import Paint_image
-from util.Segments_manager import First2Zero
+from util import *
 
 os.environ["LOKY_MAX_CPU_COUNT"] = "11"
 

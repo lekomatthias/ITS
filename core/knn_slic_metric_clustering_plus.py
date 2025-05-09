@@ -13,8 +13,8 @@ import warnings
 import skfuzzy as fuzz
 from minisom import MiniSom
 
-from util.timing import timing
 from core.knn_slic_metric_clustering import ClusteringClassifier
+from util.timing import timing
 from util.Segments_manager import First2Zero
 
 class ClusteringClassifier2(ClusteringClassifier):

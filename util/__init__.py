@@ -12,12 +12,23 @@ from .JPG2segments import JPG2segments
 from .segments2JPG import segments2JPG
 from .process_f2f import Process_f2f
 
-# importa todas as funções
 __all__ = [
     'Enforce_connectivity',
     'Segment_cutting',
     'Shape_selector',
     'GetPixelsOfArea',
     'InteractiveSegmentLabeler',
-    
+    'AdaptiveMetric',
+    'create_folders',
+    'Load_Image',
+    'Save_image',
+    'generate_contrasting_colors',
+    'Paint_image',
+    'Create_image_with_segments',
+    'First2Zero',
+    'CSV2JPG',
+    'CSV2segments',
+    'JPG2segments',
+    'segments2JPG',
+    'Process_f2f'
 ]
