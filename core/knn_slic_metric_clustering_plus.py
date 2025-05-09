@@ -15,6 +15,7 @@ from minisom import MiniSom
 
 from util.timing import timing
 from core.knn_slic_metric_clustering import ClusteringClassifier
+from util.Segments_manager import First2Zero
 
 class ClusteringClassifier2(ClusteringClassifier):
     """"
@@ -189,5 +190,5 @@ class ClusteringClassifier2(ClusteringClassifier):
             raise ValueError(f"Método de classificação desconhecido: {method}")
 
         combined_segments = self.Clusters2segments(segments, labels)
-        combined_segments = self.First2Zero(combined_segments)
+        combined_segments = First2Zero(combined_segments)
         return combined_segments, labels

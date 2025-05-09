@@ -1,22 +1,20 @@
 import numpy as np
 import cv2
 import os
-import joblib
 from skimage.segmentation import slic
 from tkinter import filedialog
-from time import time
 
-from core.knn_apply import SuperpixelClassifier
-from core.knn_slic import PixelClassifier2
+from core.MaskClassifier import MaskClassifier
 from util import InteractiveSegmentLabeler
 from util.AdaptiveMetric import AdaptiveMetric
 from util import Enforce_connectivity
 from util.timing import timing
 from util import GetPixelsOfArea
 from util.File_manager import Load_Image, Save_image
-from util.Image_manager import Paint_image, Create_image_with_segments
+from util.Image_manager import Paint_image
+from util.Segments_manager import First2Zero
 
-class SuperpixelClassifier2(SuperpixelClassifier):
+class SuperpixelClassifier:
     """
     Classificador de superpixels baseado em KNN e cores contrastantes.
     """
@@ -25,31 +23,49 @@ class SuperpixelClassifier2(SuperpixelClassifier):
         """Inicializa o classificador com um modelo treinado."""
 
         self.new_model = new_model
-        self.Similar_SP = AdaptiveMetric()
         self.LAB = LAB
         self.num_segments = num_segments
+
+    def Train(self, image_path=None):
+        """
+        Faz o treinamento da matriz métrica.
+        """
+
+        image, apply_image_dir, apply_image_name_no_ext = Load_Image(image_path)
+        
+        segments_path = os.path.join(apply_image_dir, "segmentos",
+                                     f"segmentos_{apply_image_name_no_ext}_{self.num_segments}.npy")
+        if not os.path.exists(segments_path):
+            self.SP_divide(image_path=os.path.join(apply_image_dir, apply_image_name_no_ext+".jpg"))
+
+        # seleção de modelo métrica para continuar o treinamento
+        metric_name = f"metrica_{'LAB' if self.LAB else 'RGB'}_{self.num_segments}.npy"
+        metric_path = os.path.join(apply_image_dir, "metricas", metric_name)
+        if not os.path.exists(metric_path) and self.new_model:
+            print("Nenhum modelo encontrado, treinando um novo modelo.")
+        Similar_SP = AdaptiveMetric()
+        Similar_SP.load_metric(metric_path)
+        print(f"Modelo carregado de {metric_path}")
+
+        segments = np.load(segments_path)
+        if self.LAB:
+            img_temp = cv2.cvtColor(image, cv2.COLOR_RGB2LAB)
+            # Zera a luminozidade
+            img_temp[:, :, 0] = 0
+        else:
+            img_temp = image
+        labeler = InteractiveSegmentLabeler(image, segments)
+        try:
+            segments = labeler.run()
+            Similar_SP.train(img_temp, segments)
+        except:
+            print("Nenhuma segmentação selecionada. Encerrando o programa.")
+            exit()
+        Similar_SP.save_metric(metric_path)
+        print(f"Modelo salvo em {metric_path}")
+
+        return metric_path
     
-    # ajuste pra organizar o código mas não ajustar todos os códigos posteriores
-    def Load_Image(self, apply_image_path=None):
-        return Load_Image(apply_image_path=apply_image_path)
-    def Save_image(self, image, apply_image_dir, apply_image_name_no_ext, image_type="classified"):
-        return Save_image(image, apply_image_dir, apply_image_name_no_ext, self.num_segments, image_type)
-    def Paint_image(self, image, segments):
-        return Paint_image(image, segments)
-    def Create_image_with_segments(self, seg_path=None):
-        return Create_image_with_segments(seg_path=seg_path)
-
-    def First2Zero(self, segments):
-        # leva o valor mínimo para zero
-        if np.min(segments) < 0:
-            segments = segments - np.min(segments)
-        init = segments[0, 0]
-        if init == 0: return segments
-        final = (segments == 0)*init
-        initial = (segments == init)*init
-        segments = segments - initial + final
-        return segments
-
     @timing
     def SP_divide(self, image_path=None, standard_size=None):
         """
@@ -75,56 +91,33 @@ class SuperpixelClassifier2(SuperpixelClassifier):
 
         segments_path = os.path.join(apply_image_dir, "segmentos",
                                      f"segmentos_{apply_image_name_no_ext}_{self.num_segments}.npy")
+        
         mask_path = os.path.join(apply_image_dir, "mascaras",
                                  f"mask_{apply_image_name_no_ext}.npy")
-
-        print("Selecione o modelo a nível de pixel para aplicação.")
-        model_path = filedialog.askopenfilename(title="Selecione o modelo para aplicação",
-                                                filetypes=[("joblib", "*.joblib")])
-        if not model_path:
-            print("Nenhum modelo selecionado. Encerrando o programa.")
-            return
-        classifier = PixelClassifier2(model_path=model_path)
-
-        it = time()
-        print("Dividindo a imagem em superpixels...")
-        # Processamento inicial dos pixels (caso de imagem colorida ou em escala de cinza)
-        if len(image.shape) > 2:
-            reshaped_image = image.reshape((-1, image.shape[-1]))
-        else:
-            reshaped_image = image
-
+        
         if os.path.exists(mask_path):
             print(f"Máscara já existe em {mask_path}. Carregando...")
             results = np.load(mask_path)
         else:
-            results = joblib.Parallel(n_jobs=-1)(joblib.delayed(classifier.predict)(pixel) for pixel in reshaped_image)
-            # Reconstrói os resultados para o formato original da imagem
-            results = np.array(results).reshape(image.shape[:2])
-            np.save(mask_path, results)
-            self.Create_image_with_segments(mask_path)
+            maskClassifier = MaskClassifier()
+            results = maskClassifier.Classify(image, mask_path)
 
         if auto_num_segments:
             self.num_segments = int(np.count_nonzero(results) // pix)
             print(f"Quantidade de superpixels: {self.num_segments}")
 
         # Segmentar a imagem usando SLIC
-        # segments = slic(image, n_segments=self.num_segments, compactness=15, sigma=1,
-                        # start_label=0, min_size_factor=2e-1, max_size_factor=1e+1, mask=results)
+        segments = slic(image, n_segments=self.num_segments, compactness=15, sigma=1,
+                        start_label=0, min_size_factor=2e-1, max_size_factor=1e+1, mask=results)
 
         # segments = np.load(segments_path)
         # mask = np.load(mask_path)
         # mask = np.where(mask > 0, 1, 0).astype(np.uint8)
         # segments = segments*mask
 
-        print(f"Tempo para segmentar a imagem: {(time()-it):.1f}s")
         # Esta função decide se todos os segmentos devem realmente ser conectados.
         segments = Enforce_connectivity(segments)
-        segments = self.First2Zero(segments)
-        # plota os segmentos em imagem pelo matplotlib
-        # from matplotlib import pyplot as plt
-        # plt.imshow(segments, cmap='nipy_spectral')
-        # plt.show()
+        segments = First2Zero(segments)
 
         # Redimensiona os segmentos e a máscara para o tamanho original, se necessário
         if image.shape[:2] != original_size:
@@ -133,45 +126,6 @@ class SuperpixelClassifier2(SuperpixelClassifier):
             print(f"Segmentos e máscara redimensionados para o tamanho original {original_size[1]}x{original_size[0]}.")
 
         np.save(segments_path, segments)
-
-    def Train(self, image_path=None):
-        """
-        Faz o treinamento da matriz métrica.
-        """
-
-        image, apply_image_dir, apply_image_name_no_ext = Load_Image(image_path)
-        
-        segments_path = os.path.join(apply_image_dir, "segmentos",
-                                     f"segmentos_{apply_image_name_no_ext}_{self.num_segments}.npy")
-        if not os.path.exists(segments_path):
-            self.SP_divide(image_path=os.path.join(apply_image_dir, apply_image_name_no_ext+".jpg"))
-
-        # seleção de modelo métrica para continuar o treinamento
-        metric_name = f"metrica_{'LAB' if self.LAB else 'RGB'}_{self.num_segments}.npy"
-        metric_path = os.path.join(apply_image_dir, "metricas", metric_name)
-        if not os.path.exists(metric_path) and self.new_model:
-            print("Nenhum modelo encontrado, treinando um novo modelo.")
-        self.Similar_SP.load_metric(metric_path)
-        print(f"Modelo carregado de {metric_path}")
-
-        segments = np.load(segments_path)
-        if self.LAB:
-            img_temp = cv2.cvtColor(image, cv2.COLOR_RGB2LAB)
-            # Zera a luminozidade
-            img_temp[:, :, 0] = 0
-        else:
-            img_temp = image
-        labeler = InteractiveSegmentLabeler(image, segments)
-        try:
-            segments = labeler.run()
-            self.Similar_SP.train(img_temp, segments)
-        except:
-            print("Nenhuma segmentação selecionada. Encerrando o programa.")
-            exit()
-        self.Similar_SP.save_metric(metric_path)
-        print(f"Modelo salvo em {metric_path}")
-
-        return metric_path
 
     @timing
     def classify(self, threshold=1, image_path=None, show_data=False):
@@ -187,14 +141,15 @@ class SuperpixelClassifier2(SuperpixelClassifier):
             self.SP_divide(image_path=os.path.join(apply_image_dir, apply_image_name_no_ext+".jpg"))
 
         metric_name = f"metrica_{'LAB' if self.LAB else 'RGB'}_{self.num_segments}.npy"
-        print(metric_name)
+        print(f"Nome da métrica padrão: {metric_name}")
         metric_path = os.path.join(apply_image_dir, "metricas", metric_name)
         if not os.path.exists(metric_path):
             metric_path = filedialog.askopenfilename(title="Carregar modelo", filetypes=[("npy", "*.npy")])
             if not metric_path:
                 print("Nenhum modelo selecionado. Encerrando o programa.")
                 exit()
-        self.Similar_SP.load_metric(metric_path)
+        Similar_SP = AdaptiveMetric()
+        Similar_SP.load_metric(metric_path)
 
         print("Classificando os superpixels...")
         segments = np.load(segments_path)
@@ -204,15 +159,11 @@ class SuperpixelClassifier2(SuperpixelClassifier):
             img_temp[:, :, 0] = 0
         else:
             img_temp = image
-        new_segments = self.Similar_SP.classify_image(img_temp, segments, threshold=threshold,
+        new_segments = Similar_SP.classify_image(img_temp, segments, threshold=threshold,
                                                       show_data=show_data)
         
-        new_segments = self.First2Zero(new_segments)
-        output_image = self.Paint_image(image, new_segments)
-        # plota os segmentos em imagem pelo matplotlib
-        # from matplotlib import pyplot as plt
-        # plt.imshow(new_segments, cmap='nipy_spectral')
-        # plt.show()
+        new_segments = First2Zero(new_segments)
+        output_image = Paint_image(image, new_segments)
 
         # Salvar a imagem classificada
         Save_image(output_image, apply_image_dir, apply_image_name_no_ext, self.num_segments, "classified")

@@ -1,6 +1,6 @@
 
-from tkinter import filedialog
 from core import *
+from tkinter import filedialog
 
 if __name__ == "__main__":
 

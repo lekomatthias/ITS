@@ -7,24 +7,18 @@ from scipy.ndimage import gaussian_filter1d
 from sklearn.cluster import DBSCAN
 from sklearn.cluster import KMeans
 
-from core.knn_slic_metric import SuperpixelClassifier2
-from util.AdaptiveMetric import AdaptiveMetric
+from core.knn_slic_metric import SuperpixelClassifier
 from util.timing import timing
+from util.File_manager import Load_Image, Save_image
+from util.Image_manager import Paint_image
+from util.Segments_manager import First2Zero
 
 os.environ["LOKY_MAX_CPU_COUNT"] = "11"
 
-class ClusteringClassifier(SuperpixelClassifier2):
+class ClusteringClassifier(SuperpixelClassifier):
     """
     Classificador de superpixel com classificação de tipos parecidos.
     """
-
-    def __init__(self, num_segments=0, new_model=False, LAB=True):
-        """Inicializa o classificador com um modelo treinado."""
-
-        self.new_model = new_model
-        self.Similar_SP = AdaptiveMetric()
-        self.LAB = LAB
-        self.num_segments = num_segments
 
     @timing
     def Clusters2segments(self, segments, labels):
@@ -124,17 +118,6 @@ class ClusteringClassifier(SuperpixelClassifier2):
         
         return optimal_k
 
-    def Return_label_zero(self, segments, new_segments):
-        """
-        Retorna o rótulo do segmento zero após a junção dos segmentos.
-        """
-        zero_mask = segments == 0
-        new_zero_label = new_segments[zero_mask][0]
-        if new_zero_label != 0:
-            new_segments[new_segments == 0] = new_zero_label
-            new_segments[zero_mask] = 0
-        return new_segments
-
     def Get_SP_list(self, image, segments):
         """
         Extrai características de cor e textura dos superpixels.
@@ -187,7 +170,7 @@ class ClusteringClassifier(SuperpixelClassifier2):
             raise ValueError(f"Método de classificação desconhecido: {method}")
 
         combined_segments = self.Clusters2segments(segments, labels)
-        combined_segments = self.First2Zero(combined_segments)
+        combined_segments = First2Zero(combined_segments)
         return combined_segments, labels
 
     @timing
@@ -196,7 +179,7 @@ class ClusteringClassifier(SuperpixelClassifier2):
         Visualiza a segmentação de superpixels com o método especificado (DBSCAN ou KMeans), colorindo uma imagem.
         """
         
-        image, apply_image_dir, apply_image_name_no_ext = self.Load_Image(image_path)
+        image, apply_image_dir, apply_image_name_no_ext = Load_Image(image_path)
         segments_path = os.path.join(apply_image_dir, "segmentos",
         f"seg_finais_{apply_image_name_no_ext}_{self.num_segments}.npy")
         if not os.path.exists(segments_path):
@@ -212,9 +195,9 @@ class ClusteringClassifier(SuperpixelClassifier2):
         segments_classified, labels = self.Type_classification(image, segments, method=method, show_inertia=show_inertia)
         print(f"Número de clusters obtidos: {len(np.unique(labels))}") 
         print(f"De um total de: {len(np.unique(segments))} segmentos iniciais")
-        output_image = self.Paint_image(image, segments_classified)  
+        output_image = Paint_image(image, segments_classified)  
         # Salvar a imagem classificada
-        self.Save_image(output_image, apply_image_dir, apply_image_name_no_ext, method)
+        Save_image(output_image, apply_image_dir, apply_image_name_no_ext, method)
 
         # Salvar os segmentos após a junção
         segments_classified_path = os.path.join(apply_image_dir, "segmentos", 
