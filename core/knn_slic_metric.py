@@ -29,6 +29,9 @@ class SuperpixelClassifier:
         
         segments_path = os.path.join(apply_image_dir, "segmentos",
                                      f"segmentos_{apply_image_name_no_ext}_{self.num_segments}.npy")
+        # segments_path = os.path.join(apply_image_dir, "seeds_csv_npy",
+        #                              f"{apply_image_name_no_ext}.npy")
+        
         if not os.path.exists(segments_path):
             self.SP_divide(image_path=os.path.join(apply_image_dir, apply_image_name_no_ext+".jpg"))
 
@@ -101,13 +104,13 @@ class SuperpixelClassifier:
             print(f"Quantidade de superpixels: {self.num_segments}")
 
         # Segmentar a imagem usando SLIC
-        segments = slic(image, n_segments=self.num_segments, compactness=15, sigma=1,
-                        start_label=0, min_size_factor=2e-1, max_size_factor=1e+1, mask=results)
+        # segments = slic(image, n_segments=self.num_segments, compactness=15, sigma=1,
+        #                 start_label=0, min_size_factor=2e-1, max_size_factor=1e+1, mask=results)
 
-        # segments = np.load(segments_path)
-        # mask = np.load(mask_path)
-        # mask = np.where(mask > 0, 1, 0).astype(np.uint8)
-        # segments = segments*mask
+        segments = np.load(os.path.join(apply_image_dir, "crs_csv_npy", f"{apply_image_name_no_ext}.npy"))
+        mask = np.load(mask_path)
+        mask = np.where(mask > 0, 1, 0).astype(np.uint8)
+        segments = segments*mask
 
         # Esta função decide se todos os segmentos devem realmente ser conectados.
         segments = Enforce_connectivity(segments)
@@ -119,6 +122,7 @@ class SuperpixelClassifier:
             results = cv2.resize(results.astype(np.uint8), (original_size[1], original_size[0]), interpolation=cv2.INTER_NEAREST)
             print(f"Segmentos e máscara redimensionados para o tamanho original {original_size[1]}x{original_size[0]}.")
 
+        # Save_image(Paint_image(image, segments), apply_image_dir, apply_image_name_no_ext, 200, "slic")
         np.save(segments_path, segments)
 
     @timing

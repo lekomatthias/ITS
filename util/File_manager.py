@@ -18,7 +18,7 @@ def create_folders(root_path, folder_names=["metricas", "mascaras", "segmentos",
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
 
-@timing
+# @timing
 def Load_Image(apply_image_path=None):
     """
     Carrega a imagem para aplicação.

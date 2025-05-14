@@ -5,12 +5,13 @@ from .SP_grouper import InteractiveSegmentLabeler
 from .AdaptiveMetric import AdaptiveMetric
 from .File_manager import create_folders, Load_Image, Save_image
 from .Image_manager import generate_contrasting_colors, Paint_image, Create_image_with_segments
-from .Segments_manager import First2Zero
+from .Segments_manager import First2Zero, Clusters2segments
 from .CSV2JPG import CSV2JPG
 from .CSV2segments import CSV2segments
 from .JPG2segments import JPG2segments
 from .segments2JPG import segments2JPG
 from .process_f2f import Process_f2f
+from .Optimal_clusters import Show_inertia, Find_optimal_eps, Find_optimal_k
 
 __all__ = [
     'Enforce_connectivity',
@@ -26,9 +27,14 @@ __all__ = [
     'Paint_image',
     'Create_image_with_segments',
     'First2Zero',
+    'Clusters2segments',
     'CSV2JPG',
     'CSV2segments',
     'JPG2segments',
     'segments2JPG',
-    'Process_f2f'
+    'Process_f2f',
+    'Show_inertia',
+    'Find_optimal_k', 
+    'Find_optimal_eps',
+
 ]
