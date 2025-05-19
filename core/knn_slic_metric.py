@@ -64,7 +64,7 @@ class SuperpixelClassifier:
         return metric_path
     
     @timing
-    def SP_divide(self, image_path=None, standard_size=None):
+    def SP_divide(self, image_path=None, standard_size=None, algorithm="slic"):
         """
         Aplica a segmentação em superpixels para imagem.
         """
@@ -103,14 +103,19 @@ class SuperpixelClassifier:
             self.num_segments = int(np.count_nonzero(results) // pix)
             print(f"Quantidade de superpixels: {self.num_segments}")
 
-        # Segmentar a imagem usando SLIC
-        # segments = slic(image, n_segments=self.num_segments, compactness=15, sigma=1,
-        #                 start_label=0, min_size_factor=2e-1, max_size_factor=1e+1, mask=results)
-
-        segments = np.load(os.path.join(apply_image_dir, "crs_csv_npy", f"{apply_image_name_no_ext}.npy"))
-        mask = np.load(mask_path)
-        mask = np.where(mask > 0, 1, 0).astype(np.uint8)
-        segments = segments*mask
+        if algorithm == "slic":
+            # Segmentar a imagem usando SLIC
+            segments = slic(image, n_segments=self.num_segments, compactness=15, sigma=1,
+                            start_label=0, min_size_factor=2e-1, max_size_factor=1e+1, mask=results)
+        else:
+            try:
+                segments = np.load(os.path.join(apply_image_dir, f"{algorithm}_csv_npy", f"{apply_image_name_no_ext}.npy"))
+                mask = np.load(mask_path)
+                mask = np.where(mask > 0, 1, 0).astype(np.uint8)
+                segments = segments*mask
+            except Exception as e:
+                print(f"algoritmo não encontrado no path base da função SP_divide.\n{e}")
+                exit()
 
         # Esta função decide se todos os segmentos devem realmente ser conectados.
         segments = Enforce_connectivity(segments)
