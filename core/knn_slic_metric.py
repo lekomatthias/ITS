@@ -98,6 +98,10 @@ class SuperpixelClassifier:
         else:
             maskClassifier = MaskClassifier()
             results = maskClassifier.Classify(image, mask_path)
+            results = results.astype(np.uint8)
+            kernel = np.ones((5, 5), np.uint8)
+            results = cv2.morphologyEx(results, cv2.MORPH_OPEN, kernel)
+            results = cv2.morphologyEx(results, cv2.MORPH_CLOSE, kernel)
 
         if auto_num_segments:
             self.num_segments = int(np.count_nonzero(results) // pix)

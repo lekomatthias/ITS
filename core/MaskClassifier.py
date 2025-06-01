@@ -3,7 +3,8 @@ from tkinter import filedialog
 import numpy as np
 import joblib
 
-from core.PixelClassifier import PixelClassifier
+# from core.PixelClassifier import PixelClassifier
+from core.PixelClassifierLUT import PixelClassifierLUT as PixelClassifier
 from util.timing import timing
 from util.Image_manager import Create_image_with_segments
 
@@ -16,7 +17,7 @@ class MaskClassifier:
 
         print("Selecione o modelo a nível de pixel para aplicação.")
         model_path = filedialog.askopenfilename(title="Selecione o modelo para aplicação",
-                                                filetypes=[("joblib", "*.joblib")])
+                                                filetypes=[("joblib", "*.joblib *.npy")])
         if not model_path:
             print("Nenhum modelo selecionado. Encerrando o programa.")
             return

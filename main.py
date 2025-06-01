@@ -9,7 +9,7 @@ if __name__ == "__main__":
     
     # knn_train()
     classifier = SuperpixelClassifier(num_segments=200)
-    classifier.SP_divide(image_path=path, algorithm="etps")
+    classifier.SP_divide(image_path=path, algorithm="slic")
     # classifier.Train()
     # classifier.classify(threshold=5.8, show_data=False)
 
