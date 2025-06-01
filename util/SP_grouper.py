@@ -131,16 +131,14 @@ class InteractiveSegmentLabeler:
         return self.new_labels
 
 
-# Exemplo de uso da classe
 def main():
-    # Cria a janela principal e a oculta inicialmente
     root = tk.Tk()
     root.withdraw()
 
     # Carrega a imagem e os segmentos de exemplo
-    image_path = 'C:\\Users\\lekom\\Downloads\\artigos_TG\\(8)img\\dji_2024d.jpeg'  # Substitua pelo caminho da sua imagem
+    image_path = 'C:\\Users\\lekom\\Downloads\\artigos_TG\\(8)img\\dji_2024d.jpeg'
     image = Image.open(image_path)
-    segments = np.random.randint(0, 5, size=(image.size[1], image.size[0]))  # Segmentação fictícia
+    segments = np.random.randint(0, 5, size=(image.size[1], image.size[0]))
 
     # Inicializa o rotulador com a janela existente
     labeler = InteractiveSegmentLabeler(root, image, segments)
