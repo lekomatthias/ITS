@@ -64,22 +64,12 @@ class SuperpixelClassifier:
         return metric_path
     
     @timing
-    def SP_divide(self, image_path=None, standard_size=None, algorithm="slic"):
+    def SP_divide(self, image_path=None, algorithm="slic"):
         """
         Aplica a segmentação em superpixels para imagem.
         """
 
         image, apply_image_dir, apply_image_name_no_ext = Load_Image(image_path)
-
-        # Verifica se a imagem é muito grande e redimensiona
-        original_size = image.shape[:2]
-        if standard_size == None: standard_size = image.shape[1]//2
-        if image.shape[1] > 3000:
-            scale_factor = standard_size / image.shape[1]
-            new_width = standard_size
-            new_height = int(image.shape[0] * scale_factor)
-            image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_AREA)
-            print(f"Imagem redimensionada para {new_width}x{new_height}.")
         
         auto_num_segments = False
         if self.num_segments == 0:
@@ -124,12 +114,6 @@ class SuperpixelClassifier:
         # Esta função decide se todos os segmentos devem realmente ser conectados.
         segments = Enforce_connectivity(segments)
         segments = First2Zero(segments)
-
-        # Redimensiona os segmentos e a máscara para o tamanho original, se necessário
-        if image.shape[:2] != original_size:
-            segments = cv2.resize(segments.astype(np.uint8), (original_size[1], original_size[0]), interpolation=cv2.INTER_NEAREST)
-            results = cv2.resize(results.astype(np.uint8), (original_size[1], original_size[0]), interpolation=cv2.INTER_NEAREST)
-            print(f"Segmentos e máscara redimensionados para o tamanho original {original_size[1]}x{original_size[0]}.")
 
         # Save_image(Paint_image(image, segments), apply_image_dir, apply_image_name_no_ext, 200, "slic")
         np.save(segments_path, segments)
