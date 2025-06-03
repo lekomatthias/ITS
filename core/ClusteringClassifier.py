@@ -13,7 +13,7 @@ from sklearn.cluster import MeanShift, estimate_bandwidth
 from sklearn.mixture import GaussianMixture
 from sklearn.cluster import Birch
 
-from core.knn_slic_metric import SuperpixelClassifier
+from core.SuperpixelClassifier import SuperpixelClassifier
 from util.timing import timing
 from util import *
 
