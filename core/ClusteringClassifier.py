@@ -56,7 +56,7 @@ class ClusteringClassifier:
         return combined_segments, labels
 
     @timing
-    def Type_visualization(self, image_path=None, method='KMeans', show_inertia=False):
+    def Type_visualization(self, image_path=None, mode='KMeans', show_inertia=False):
         image, apply_image_dir, apply_image_name_no_ext = Load_Image(image_path)
         segments_path = os.path.join(apply_image_dir, "segmentos",
                                      f"seg_finais_{apply_image_name_no_ext}_{self.num_segments}.npy")
@@ -65,14 +65,14 @@ class ClusteringClassifier:
                                         image_path=os.path.join(apply_image_dir,
                                         f"{apply_image_name_no_ext}.jpeg"))
         segments = np.load(segments_path)
-        segments_classified, labels = self.Type_classification(image, segments, method=method, show_inertia=show_inertia)
+        segments_classified, labels = self.Type_classification(image, segments, method=mode, show_inertia=show_inertia)
         print(f"Número de clusters obtidos: {len(np.unique(labels))}") 
         print(f"De um total de: {len(np.unique(segments))} segmentos iniciais")
         output_image = Paint_image(image, segments_classified)
-        Save_image(output_image, apply_image_dir, apply_image_name_no_ext, self.num_segments, method)
+        Save_image(output_image, apply_image_dir, apply_image_name_no_ext, self.num_segments, mode)
 
         segments_classified_path = os.path.join(apply_image_dir, "segmentos", 
-                                                f"seg_{method}_{apply_image_name_no_ext}_{self.num_segments}.npy")
+                                                f"seg_{mode}_{apply_image_name_no_ext}_{self.num_segments}.npy")
         np.save(segments_classified_path, segments_classified)
 
     def _dispatch_clustering(self, method, sp_list, show_inertia):
