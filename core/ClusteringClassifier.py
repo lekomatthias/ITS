@@ -46,10 +46,10 @@ class ClusteringClassifier:
         return sp_list
 
     @timing
-    def Type_classification(self, image, segments, method='KMeans', show_inertia=False):
-        print(f"Classificando em tipos similares com o método {method}...")
+    def Type_classification(self, image, segments, mode='KMeans', show_inertia=False):
+        print(f"Classificando em tipos similares com o método {mode}...")
         sp_list = self.Get_SP_list(image, segments)
-        labels = self._dispatch_clustering(method, sp_list, show_inertia)
+        labels = self._dispatch_clustering(mode, sp_list, show_inertia)
 
         combined_segments = Clusters2segments(segments, labels)
         combined_segments = First2Zero(combined_segments)
@@ -65,7 +65,7 @@ class ClusteringClassifier:
                                         image_path=os.path.join(apply_image_dir,
                                         f"{apply_image_name_no_ext}.jpeg"))
         segments = np.load(segments_path)
-        segments_classified, labels = self.Type_classification(image, segments, method=mode, show_inertia=show_inertia)
+        segments_classified, labels = self.Type_classification(image, segments, mode=mode, show_inertia=show_inertia)
         print(f"Número de clusters obtidos: {len(np.unique(labels))}") 
         print(f"De um total de: {len(np.unique(segments))} segmentos iniciais")
         output_image = Paint_image(image, segments_classified)
@@ -74,6 +74,9 @@ class ClusteringClassifier:
         segments_classified_path = os.path.join(apply_image_dir, "segmentos", 
                                                 f"seg_{mode}_{apply_image_name_no_ext}_{self.num_segments}.npy")
         np.save(segments_classified_path, segments_classified)
+
+        print(f"Número de árvores: {len(np.unique(segments))}.")
+        print(f"Número de esécies: {len(np.unique(segments_classified))}.")
 
     def _dispatch_clustering(self, method, sp_list, show_inertia):
         clustering_methods = {

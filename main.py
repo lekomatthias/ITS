@@ -44,8 +44,9 @@ if __name__ == "__main__":
     #     cluster.Type_visualization(image_path=path, method=alg, show_inertia=False)
 
     functions = [
-        {'name': 'Contador', 'function': classifier.classify, 'mode': 'select', 'list': SP_list},
-        {'name': 'Classificador', 'function': cluster.Type_visualization, 'mode': 'select', 'list': alg_list},
+        {'name': 'Segmentador', 'function': classifier.SP_divide, 'mode': 'select', 'list': SP_list}, 
+        {'name': 'Contador', 'function': classifier.classify, 'mode': 'select', 'list': SP_list}, 
+        {'name': 'Classificador', 'function': cluster.Type_visualization, 'mode': 'select', 'list': alg_list}, 
     ]
 
     menu = Menu(functions=functions, 

@@ -1,5 +1,21 @@
-from tkinter import messagebox, ttk, Entry, Button, Label
+import threading
+import sys
+from tkinter import ttk, Entry, Button, Label, Toplevel, Text, Scrollbar, VERTICAL, RIGHT, Y, END
 
+class TextRedirector:
+    def __init__(self, text_widget):
+        self.text_widget = text_widget
+
+    def write(self, string):
+        if string:
+            self.text_widget.after(0, self._write_to_widget, string)
+
+    def _write_to_widget(self, string):
+        self.text_widget.insert(END, string)
+        self.text_widget.see(END)
+
+    def flush(self):
+        pass  # necessário para compatibilidade com sys.stdout
 
 class SubInterface:
     def __init__(self, function, mode, name, master, list=None):
@@ -37,10 +53,32 @@ class SubInterface:
             text=self.name,
             width=30,
             height=2,
-            command=self.execute
+            command=self._start_thread
         ).pack(pady=3)
 
-    def execute(self):
+    def _start_thread(self):
+        self._open_output_popup()
+        thread = threading.Thread(target=self._run_function, daemon=True)
+        thread.start()
+
+    def _open_output_popup(self):
+        self.popup = Toplevel(self.master)
+        self.popup.title(f"Saída de {self.name}")
+
+        self.text_widget = Text(self.popup, wrap='word', width=100, height=20)
+        self.text_widget.pack(side='left', fill='both', expand=True)
+
+        scrollbar = Scrollbar(self.popup, command=self.text_widget.yview, orient=VERTICAL)
+        scrollbar.pack(side=RIGHT, fill=Y)
+
+        self.text_widget.config(yscrollcommand=scrollbar.set)
+        self.text_widget.insert(END, f"Executando {self.name}...\n")
+        self.text_widget.config(state='normal')
+
+    def _run_function(self):
+        old_stdout = sys.stdout
+        sys.stdout = TextRedirector(self.text_widget)
+
         try:
             if self.mode == 'button':
                 self.function()
@@ -56,7 +94,10 @@ class SubInterface:
             else:
                 raise ValueError(f"Modo desconhecido: {self.mode}")
 
-            messagebox.showinfo("Sucesso", f"{self.name} executado com sucesso.")
+            print(f"\n{self.name} executado com sucesso.")
 
         except Exception as e:
-            messagebox.showerror("Erro", f"Ocorreu um erro: {e}")
+            print(f"\nErro ao executar {self.name}: {e}")
+
+        finally:
+            sys.stdout = old_stdout  # restaurar saída padrão
