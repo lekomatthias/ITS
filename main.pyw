@@ -4,9 +4,11 @@ from interface import Menu
 
 if __name__ == "__main__":
 
+    n_seg = 200
     knn = knn_train()
-    classifier = SuperpixelClassifier(num_segments=200)
-    clusterer = ClusteringClassifier(num_segments=200)
+    metric = Metric_train(num_segments=n_seg)
+    classifier = SuperpixelClassifier(num_segments=n_seg)
+    clusterer = ClusteringClassifier(num_segments=n_seg)
 
     SP_list = [
         "slic", 
@@ -31,10 +33,11 @@ if __name__ == "__main__":
     
     functions = [
         {'name': 'Treinar K-nn', 'function': knn.run, 'mode': 'open'}, 
-        {'name': 'Treinar métrica', 'function': classifier.Train, 'mode': 'open'}, 
         {'name': 'Segmentador', 'function': classifier.SP_divide, 'mode': 'select', 'list': SP_list}, 
+        {'name': 'Treinar métrica', 'function': metric.Train, 'mode': 'open'}, 
         {'name': 'Contador', 'function': classifier.classify, 'mode': 'select', 'list': SP_list}, 
         {'name': 'Classificador', 'function': clusterer.Type_visualization, 'mode': 'select', 'list': alg_list}, 
+
     ]
     
     menu = Menu(functions=functions, 

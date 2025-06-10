@@ -1,70 +1,70 @@
 import numpy as np
-from scipy.ndimage import label, find_objects
-
+from scipy.ndimage import label, find_objects, binary_dilation
 from util.timing import timing
 
-def get_right_or_left_label(row, col, w, segments, segment_id):
-    if col + 1 < w:
-        new_label = segments[row, col + 1]
-        if new_label != segment_id:
-            return new_label
-    if col - 1 >= 0:
-        new_label = segments[row, col - 1]
-        if new_label != segment_id:
-            return new_label
-    return segment_id
-
-
 @timing
-def Enforce_connectivity(segments):
-
-    print("Garantindo conectividade...")
+def Enforce_connectivity(segment_map):
+    h, w = segment_map.shape
+    segment_map = segment_map.copy()
     structure = np.array([[0, 1, 0],
                           [1, 1, 1],
                           [0, 1, 0]], dtype=int)
 
-    h, w = segments.shape
-    segments = segments.copy()
+    unique_labels = np.unique(segment_map)
+    total = len(unique_labels)
+    bar_length = 50
+    step = max(total // bar_length, 1)
 
-    for segment_id in np.unique(segments):
-        if segment_id <= 0:
+    print(f"Garantindo conectividade ({len(unique_labels)} labels):")
+    print("." + "_" * bar_length + ".")
+    print("[", end="", flush=True)
+
+    for i, label_id in enumerate(unique_labels):
+        if i % step == 0 and i // step < bar_length:
+            print("=", end="", flush=True)
+
+        if label_id <= 0:
             continue
 
-        mask = segments == segment_id
+        mask = segment_map == label_id
         if np.count_nonzero(mask) == 0:
             continue
 
-        labeled_array, num_features = label(mask, structure=structure)
-        if num_features <= 1:
+        components, num_components = label(mask, structure=structure)
+        if num_components <= 1:
             continue
 
-        component_sizes = np.bincount(labeled_array.ravel())[1:]
+        component_sizes = np.bincount(components.ravel())[1:]
         largest_component_id = np.argmax(component_sizes) + 1
+        slices = find_objects(components)
 
-        objects = find_objects(labeled_array)
-
-        for feature_id in range(1, num_features + 1):
-            if feature_id == largest_component_id:
+        for comp_id in range(1, num_components + 1):
+            if comp_id == largest_component_id:
                 continue
 
-            sl = objects[feature_id - 1]
+            sl = slices[comp_id - 1]
             if sl is None:
                 continue
 
-            feature_mask = (labeled_array[sl] == feature_id)
-
-            rows, cols = np.where(feature_mask)
-            if rows.size == 0:
+            local_mask = components[sl] == comp_id
+            if not np.any(local_mask):
                 continue
 
-            rows_global = rows + sl[0].start
-            cols_global = cols + sl[1].start
+            global_mask = np.zeros_like(segment_map, dtype=bool)
+            global_mask[sl] = local_mask
 
-            row = rows_global[-1]
-            col = cols_global[-1]
+            border = binary_dilation(global_mask, structure=structure) & (~global_mask)
+            neighbors = segment_map[border]
 
-            new_label = get_right_or_left_label(row, col, w, segments, segment_id)
+            # Corrigido: remove negativos e o próprio rótulo
+            neighbors = neighbors[(neighbors != label_id) & (neighbors > 0)]
 
-            segments[sl][feature_mask] = new_label
+            if neighbors.size > 0:
+                new_label = np.bincount(neighbors).argmax()
+            else:
+                new_label = label_id
 
-    return segments
+            segment_map[sl][local_mask] = new_label
+
+    print("]")
+    return segment_map
