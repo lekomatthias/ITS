@@ -75,7 +75,7 @@ def Save_image(output_image, apply_image_dir, apply_image_name_no_ext, num_segme
     output_image = np.clip(output_image, 0, 255)
     output_image = output_image.astype(np.uint8)
     output_image = cv2.cvtColor(output_image, cv2.COLOR_RGB2BGR)
-    output_image_path = os.path.join(apply_image_dir, "classificadas",
-                                        f"({type}){apply_image_name_no_ext}_{num_segments}.jpeg")
+    output_image_path = os.path.join(apply_image_dir, 
+                                     f"({type}){apply_image_name_no_ext}_{num_segments}.jpeg")
     imsave(output_image_path, output_image)
     print(f"Imagem classificada salva em: {output_image_path}")

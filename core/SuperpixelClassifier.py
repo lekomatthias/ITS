@@ -20,21 +20,13 @@ class SuperpixelClassifier:
         self.LAB = LAB
         self.num_segments = num_segments
 
-    def Train(self, image_path=None):
+    def Train(self, image_path=None, root=None):
         """
         Faz o treinamento da matriz métrica.
         """
 
         image, apply_image_dir, apply_image_name_no_ext = Load_Image(image_path)
         
-        segments_path = os.path.join(apply_image_dir, "segmentos",
-                                     f"segmentos_{apply_image_name_no_ext}_{self.num_segments}.npy")
-        # segments_path = os.path.join(apply_image_dir, "seeds_csv_npy",
-        #                              f"{apply_image_name_no_ext}.npy")
-        
-        if not os.path.exists(segments_path):
-            self.SP_divide(image_path=os.path.join(apply_image_dir, apply_image_name_no_ext+".jpg"))
-
         # seleção de modelo métrica para continuar o treinamento
         metric_name = f"metrica_{'LAB' if self.LAB else 'RGB'}_{self.num_segments}.npy"
         metric_path = os.path.join(apply_image_dir, "metricas", metric_name)
@@ -44,14 +36,13 @@ class SuperpixelClassifier:
         Similar_SP.load_metric(metric_path)
         print(f"Modelo carregado de {metric_path}")
 
-        segments = np.load(segments_path)
         if self.LAB:
             img_temp = cv2.cvtColor(image, cv2.COLOR_RGB2LAB)
             # Zera a luminozidade
             img_temp[:, :, 0] = 0
         else:
             img_temp = image
-        labeler = InteractiveSegmentLabeler(image, segments)
+        labeler = SP_grouper(image, root=root)
         try:
             segments = labeler.run()
             Similar_SP.train(img_temp, segments)
@@ -127,7 +118,8 @@ class SuperpixelClassifier:
         segments = Enforce_connectivity(segments)
         segments = First2Zero(segments)
 
-        # Save_image(Paint_image(image, segments), apply_image_dir, apply_image_name_no_ext, 200, "slic")
+        segments_dir = os.path.join(apply_image_dir, "segmentos")
+        create_folders(segments_dir, [f"{mode}"])
         np.save(segments_path, segments)
 
     @timing
@@ -165,20 +157,14 @@ class SuperpixelClassifier:
             img_temp = image
         new_segments = Similar_SP.classify_image(img_temp, segments, threshold=threshold,
                                                       show_data=show_data)
-        
-        new_segments = First2Zero(new_segments)
+        # new_segments = First2Zero(new_segments)
         output_image = Paint_image(image, new_segments)
-
-        # Salvar a imagem classificada
-        Save_image(output_image, apply_image_dir, apply_image_name_no_ext, self.num_segments, f"{mode}")
-
-        # Salvar os novos segmentos
-        final_segments_path = os.path.join(apply_image_dir, "segmentos",
-                                           f"{mode}", f"seg_finais_{apply_image_name_no_ext}_{self.num_segments}.npy")
-        np.save(final_segments_path, new_segments)
         
-        # reparo para facilitar de encontrar os segmentos finais desejados.
-        # mudar assim que possível!!!
+        path_save = os.path.join(apply_image_dir, "classificadas", "segmentadas")
+        if not os.path.exists(path_save):
+            os.makedirs(path_save)
+        Save_image(output_image, path_save, apply_image_name_no_ext, self.num_segments, f"{mode}")
+        
         final_segments_path = os.path.join(apply_image_dir, "segmentos",
                                            f"seg_finais_{apply_image_name_no_ext}_{self.num_segments}.npy")
         np.save(final_segments_path, new_segments)

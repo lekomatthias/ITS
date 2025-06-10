@@ -1,10 +1,8 @@
 import numpy as np
 from scipy.ndimage import label, find_objects
-from numba import njit
 
 from util.timing import timing
 
-@njit
 def get_right_or_left_label(row, col, w, segments, segment_id):
     if col + 1 < w:
         new_label = segments[row, col + 1]

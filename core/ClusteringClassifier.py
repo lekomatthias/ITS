@@ -14,8 +14,9 @@ from sklearn.mixture import GaussianMixture
 from sklearn.cluster import Birch
 
 from core.SuperpixelClassifier import SuperpixelClassifier
-from util.timing import timing
 from util import *
+from util.Diversity import Diversity
+from util.timing import timing
 
 os.environ["LOKY_MAX_CPU_COUNT"] = "11"
 
@@ -44,39 +45,6 @@ class ClusteringClassifier:
         scaler = StandardScaler()
         sp_list = scaler.fit_transform(sp_list)
         return sp_list
-
-    @timing
-    def Type_classification(self, image, segments, mode='KMeans', show_inertia=False):
-        print(f"Classificando em tipos similares com o método {mode}...")
-        sp_list = self.Get_SP_list(image, segments)
-        labels = self._dispatch_clustering(mode, sp_list, show_inertia)
-
-        combined_segments = Clusters2segments(segments, labels)
-        combined_segments = First2Zero(combined_segments)
-        return combined_segments, labels
-
-    @timing
-    def Type_visualization(self, image_path=None, mode='KMeans', show_inertia=False):
-        image, apply_image_dir, apply_image_name_no_ext = Load_Image(image_path)
-        segments_path = os.path.join(apply_image_dir, "segmentos",
-                                     f"seg_finais_{apply_image_name_no_ext}_{self.num_segments}.npy")
-        if not os.path.exists(segments_path):
-            self.sp_classifier.classify(threshold=5.8,
-                                        image_path=os.path.join(apply_image_dir,
-                                        f"{apply_image_name_no_ext}.jpeg"))
-        segments = np.load(segments_path)
-        segments_classified, labels = self.Type_classification(image, segments, mode=mode, show_inertia=show_inertia)
-        print(f"Número de clusters obtidos: {len(np.unique(labels))}") 
-        print(f"De um total de: {len(np.unique(segments))} segmentos iniciais")
-        output_image = Paint_image(image, segments_classified)
-        Save_image(output_image, apply_image_dir, apply_image_name_no_ext, self.num_segments, mode)
-
-        segments_classified_path = os.path.join(apply_image_dir, "segmentos", 
-                                                f"seg_{mode}_{apply_image_name_no_ext}_{self.num_segments}.npy")
-        np.save(segments_classified_path, segments_classified)
-
-        print(f"Número de árvores: {len(np.unique(segments))}.")
-        print(f"Número de esécies: {len(np.unique(segments_classified))}.")
 
     def _dispatch_clustering(self, method, sp_list, show_inertia):
         clustering_methods = {
@@ -143,3 +111,38 @@ class ClusteringClassifier:
         
         return clustering_methods[method]()
 
+    @timing
+    def Type_classification(self, image, segments, mode='KMeans', show_inertia=False):
+        print(f"Classificando em tipos similares com o método {mode}...")
+        sp_list = self.Get_SP_list(image, segments)
+        labels = self._dispatch_clustering(mode, sp_list, show_inertia)
+
+        combined_segments = Clusters2segments(segments, labels)
+        combined_segments = First2Zero(combined_segments)
+        return combined_segments, labels
+
+    @timing
+    def Type_visualization(self, image_path=None, mode='KMeans', show_inertia=False):
+        image, apply_image_dir, apply_image_name_no_ext = Load_Image(image_path)
+        segments_path = os.path.join(apply_image_dir, "segmentos",
+                                     f"seg_finais_{apply_image_name_no_ext}_{self.num_segments}.npy")
+        if not os.path.exists(segments_path):
+            self.sp_classifier.classify(threshold=5.8,
+                                        image_path=os.path.join(apply_image_dir,
+                                        f"{apply_image_name_no_ext}.jpeg"))
+        segments = np.load(segments_path)
+        segments_classified, labels = self.Type_classification(image, segments, mode=mode, show_inertia=show_inertia)
+        output_image = Paint_image(image, segments_classified)
+
+        path_save = os.path.join(apply_image_dir, "classificadas", f"{mode}")
+        if not os.path.exists(path_save):
+            os.makedirs(path_save)
+        Save_image(output_image, path_save, apply_image_name_no_ext, self.num_segments, mode)
+
+        segments_classified_path = os.path.join(apply_image_dir, "segmentos", 
+                                                f"seg_{mode}_{apply_image_name_no_ext}_{self.num_segments}.npy")
+        np.save(segments_classified_path, segments_classified)
+
+        print(f"Número de árvores: {len(np.unique(segments))}.")
+        div = Diversity(segments_classified)
+        div.summary()
