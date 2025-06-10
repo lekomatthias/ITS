@@ -1,51 +1,57 @@
 import tkinter as tk
 import numpy as np
 from PIL import Image, ImageTk
+from tkinter import filedialog
 
-class InteractiveSegmentLabeler:
-    def __init__(self, image, segments):
+class SP_grouper:
+    def __init__(self, image, root=None):
         """
         Inicializa o rotulador interativo de segmentos.
         """
-        # Converte a imagem para numpy se necessário
+
         if isinstance(image, Image.Image):
             self.image = np.array(image)
         else:
             self.image = image
-
-        self.segments = segments
-        self.new_labels = np.full_like(segments, -1)  # Matriz para novos rótulos (-1 = não atribuído)
-        self.processed_image = self._add_white_lines(self.image, segments)
+        
+        self.segments = np.load(filedialog.askopenfilename(
+                                title="Selecione os segmentos", 
+                                filetypes=[("Numpy files", "*.npy")]))
+        self.new_labels = np.full_like(self.segments, -1)
+        self.processed_image = self._add_white_lines(self.image, self.segments)
         self.selected_segments = set()
         self.current_label = 0
 
         # Ajusta a escala da imagem para altura fixa
         self.display_image, self.scale_factor = self._resize_image(self.processed_image, target_height=600)
 
-        
-        self.master = tk.Tk()
+        self.master = root
+        if not self.master:
+            self.master = tk.Tk()
+            self._mainloop = True
+        else:
+            self._mainloop = False
+
         self.master.withdraw()
         self.master.deiconify()
         self.master.title("Seleção de Segmentos")
 
-        # Canvas para exibir a imagem
         self.canvas = tk.Canvas(self.master, width=self.display_image.width, height=self.display_image.height)
         self.canvas.pack()
 
-        # Exibe a imagem inicial
         self.tk_image = ImageTk.PhotoImage(self.display_image)
         self.image_on_canvas = self.canvas.create_image(0, 0, anchor=tk.NW, image=self.tk_image)
 
-        # Botão para atribuir rótulos
         self.button_label = tk.Button(self.master, text="Atribuir Novo Rótulo", command=self.assign_label)
         self.button_label.pack(side=tk.LEFT)
 
-        # Botão para finalizar
         self.button_finish = tk.Button(self.master, text="Finalizar", command=self.finish)
         self.button_finish.pack(side=tk.RIGHT)
 
-        # Bind do clique do mouse
         self.canvas.bind("<Button-1>", self.on_click)
+
+        if self._mainloop:
+            self.root.mainloop()
 
     def _add_white_lines(self, image, segments):
         """
@@ -131,24 +137,21 @@ class InteractiveSegmentLabeler:
         return self.new_labels
 
 
-def main():
+if __name__ == "__main__":
+    
     root = tk.Tk()
     root.withdraw()
 
     # Carrega a imagem e os segmentos de exemplo
-    image_path = 'C:\\Users\\lekom\\Downloads\\artigos_TG\\(8)img\\dji_2024d.jpeg'
+    image_path = filedialog.askopenfilename()
     image = Image.open(image_path)
-    segments = np.random.randint(0, 5, size=(image.size[1], image.size[0]))
+    segments = np.load(filedialog.askopenfilename())
 
     # Inicializa o rotulador com a janela existente
-    labeler = InteractiveSegmentLabeler(root, image, segments)
+    labeler = SP_grouper(image, segments, root=root)
 
     # Executa o rotulador e captura os segmentos rotulados
     labeled_segments = labeler.run()
 
     # Exibe os resultados
     print("Segmentos rotulados:", np.unique(labeled_segments))
-
-
-if __name__ == "__main__":
-    main()
