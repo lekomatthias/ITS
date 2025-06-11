@@ -61,7 +61,7 @@ def Find_optimal_k(sp_list, algorithm_name="KMeans", k_min=None, k_max=None, sho
 
     print(f"Encontrando o valor ótimo de k do algoritmo {algorithm_name}...")
     if not k_min: k_min = int(len(sp_list)*0.05)
-    if not k_max: k_max = int(len(sp_list)*0.95)
+    if not k_max: k_max = int(len(sp_list)*0.5)
 
     if len(sp_list) < k_min or len(sp_list) < k_max:
         raise ValueError(f"Número de superpixels ({len(sp_list)}) deve ser maior ou igual a k_min ({k_min}) e k_max ({k_max}).")

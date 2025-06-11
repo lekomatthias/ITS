@@ -3,22 +3,7 @@ import sys
 import tkinter as tk
 from tkinter import ttk, Entry, Button, Label, Toplevel, Text, Scrollbar, VERTICAL, RIGHT, Y, END
 
-class TextRedirector:
-    def __init__(self, text_widget):
-        self.text_widget = text_widget
-
-    def write(self, string):
-        if string:
-            self.text_widget.after(0, self._write_to_widget, string)
-
-    def _write_to_widget(self, string):
-        self.text_widget.config(state='normal')
-        self.text_widget.insert(END, string)
-        self.text_widget.see(END)
-        self.text_widget.config(state='disabled')
-
-    def flush(self):
-        pass
+from interface.TextRedirector import TextRedirector
 
 class SubInterface:
     def __init__(self, function, mode, name, master, list=None):
@@ -36,7 +21,6 @@ class SubInterface:
         self._build_interface()
 
     def _build_interface(self):
-        # Label explicativo, se necessário
         if self.mode == 'prompt':
             Label(self.master, text=f"Entrada para {self.name}:").pack(anchor="w")
             self.entry = Entry(self.master, width=40)

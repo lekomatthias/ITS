@@ -1,4 +1,5 @@
 import tkinter as tk
+
 from interface.SubInterface import SubInterface
 
 
@@ -7,7 +8,7 @@ class Menu:
         self.functions = functions
         self.root = tk.Tk()
         self.root.title(title)
-        self.root.geometry("300x400")  # levemente maior pra testar scroll
+        self.root.geometry("300x400")
 
     def build_interface(self):
         tk.Label(self.root, text="Menu de funções", font=('Arial', 16)).pack(pady=10)
