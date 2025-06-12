@@ -1,7 +1,9 @@
 import numpy as np
 import os
+import sys
 from scipy.ndimage import label, find_objects, binary_dilation
 from concurrent.futures import ThreadPoolExecutor
+from tqdm import tqdm
 
 from util.timing import timing
 
@@ -55,8 +57,7 @@ def process_label(segment_map, label_id, structure):
 
 @timing
 def Enforce_connectivity(segment_map):
-
-    print("Garantindo conectividade...")
+    print("Garantindo conectividade...\n")
     segment_map = segment_map.copy()
     structure = np.array([[0,1,0],
                           [1,1,1],
@@ -65,10 +66,15 @@ def Enforce_connectivity(segment_map):
     unique_labels = np.unique(segment_map)
 
     with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
-        futures = [executor.submit(process_label, segment_map, label_id, structure)
-                   for label_id in unique_labels]
+        futures = []
+        for label_id in tqdm(unique_labels, desc="Processando labels", 
+                             file=sys.stdout, leave=True, 
+                             bar_format='{l_bar}{bar:20}| {n_fmt}/{total_fmt}\n'):
+            futures.append(executor.submit(process_label, segment_map, label_id, structure))
 
-        results = [f.result() for f in futures]
+        results = [f.result() for f in tqdm(futures, desc="Progresso", 
+                                            file=sys.stdout, leave=True, 
+                                            bar_format='{l_bar}{bar:20}| {n_fmt}/{total_fmt}\n')]
 
     for updates in results:
         if updates is None:

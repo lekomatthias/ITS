@@ -54,7 +54,8 @@ class SubInterface:
 
     def _run_function(self):
         old_stdout = sys.stdout
-        sys.stdout = TextRedirector(self.text_widget)
+        redirector = TextRedirector(self.text_widget)
+        sys.stdout = redirector
         try:
             wrapped_func = Interrupt(self.stop_event)(self.function)
             wrapped_func()

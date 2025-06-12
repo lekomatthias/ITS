@@ -1,9 +1,9 @@
-
 from tkinter import END
 
 class TextRedirector:
     def __init__(self, text_widget):
         self.text_widget = text_widget
+        self._last_line_index = None
 
     def write(self, string):
         if string:
@@ -11,17 +11,18 @@ class TextRedirector:
 
     def _write_to_widget(self, string):
         try:
-            if self.text_widget.winfo_exists():
-                self.text_widget.config(state='normal')
-                
-                if string.startswith('\r'):
-                    # Apaga a última linha (simulando sobrescrita como em terminal)
-                    self._delete_last_line()
-                    string = string.lstrip('\r')
+            if not self.text_widget.winfo_exists():
+                return
 
-                self.text_widget.insert(END, string)
-                self.text_widget.see(END)
-                self.text_widget.config(state='disabled')
+            self.text_widget.config(state='normal')
+
+            if '\r' in string:
+                self._delete_last_line()
+                string = string.replace('\r', '')
+
+            self.text_widget.insert(END, string)
+            self.text_widget.see(END)
+            self.text_widget.config(state='disabled')
         except Exception:
             pass
 
@@ -31,4 +32,3 @@ class TextRedirector:
 
     def flush(self):
         pass
-    

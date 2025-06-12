@@ -83,7 +83,7 @@ class SuperpixelClassifier:
                 raise ValueError(f"algoritmo não encontrado no path base da função SP_divide.\n{e}")
 
         # Esta função decide se todos os segmentos devem realmente ser conectados.
-        # segments = Enforce_connectivity(segments)
+        segments = Enforce_connectivity(segments)
         segments = First2Zero(segments)
 
         segments_dir = os.path.join(apply_image_dir, "segmentos")
