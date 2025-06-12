@@ -1,4 +1,4 @@
-import tkinter as tk
+
 from tkinter import messagebox
 from interface.SubInterface import SubInterface
 
