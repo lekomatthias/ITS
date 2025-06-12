@@ -28,6 +28,7 @@ def Show_inertia(k_values, distortions, optimal_k=None):
     plt.legend()
     plt.show()
 
+@timing
 def Find_optimal_eps(sp_list, eps_min=0.1, eps_max=1.0, step=0.01, show_plot=False):
     print("Encontrando o valor ótimo de eps...")
     if len(sp_list) < 2:

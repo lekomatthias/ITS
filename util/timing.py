@@ -1,14 +1,13 @@
 import time
 import functools
 
-# Decorador para contar o tempo
 def timing(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        start_time = time.time()
+        start = time.perf_counter()
         result = func(*args, **kwargs)
-        end_time = time.time()
-        exec_time = end_time - start_time
-        print(f"Função '{func.__name__}' demorou: {exec_time:.4f} segundos.")
+        duration = time.perf_counter() - start
+        if duration > 1:
+            print(f"'{func.__name__}' levou {duration:.2f}s.")
         return result
     return wrapper

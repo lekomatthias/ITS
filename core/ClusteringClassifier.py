@@ -148,7 +148,6 @@ class ClusteringClassifier:
         div = Diversity(segments_classified)
         div.summary()
 
-    @timing
     def Type_visualization_list(self, image_path=None, mode=['KMeans'], show_inertia=False):
         if image_path is None:
             image_path = filedialog.askopenfilename(title="Selecione a imagem", filetypes=[("Imagens", "*.jpg *.jpeg *.png")])
