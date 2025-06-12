@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import os
+from tkinter import filedialog
 import skfuzzy as fuzz
 from minisom import MiniSom
 from sklearn.preprocessing import StandardScaler
@@ -146,3 +147,15 @@ class ClusteringClassifier:
         print(f"Número de árvores: {len(np.unique(segments))}.")
         div = Diversity(segments_classified)
         div.summary()
+
+    @timing
+    def Type_visualization_list(self, image_path=None, mode=['KMeans'], show_inertia=False):
+        if image_path is None:
+            image_path = filedialog.askopenfilename(title="Selecione a imagem", filetypes=[("Imagens", "*.jpg *.jpeg *.png")])
+            if not image_path:
+                print("Nenhuma imagem selecionada.")
+                return
+
+        for m in mode:
+            print(f"\n==> Executando para o modo: {m}")
+            self.Type_visualization(image_path=image_path, mode=m, show_inertia=show_inertia)

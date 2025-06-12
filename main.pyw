@@ -37,6 +37,7 @@ if __name__ == "__main__":
         {'name': 'Treinar métrica', 'function': metric.Train, 'mode': 'open'}, 
         {'name': 'Contador', 'function': classifier.classify, 'mode': 'select', 'list': SP_list}, 
         {'name': 'Classificador', 'function': clusterer.Type_visualization, 'mode': 'select', 'list': alg_list}, 
+        {'name': 'Classificador completo', 'function': clusterer.Type_visualization_list, 'mode': 'batch', 'list': alg_list},
 
     ]
     
