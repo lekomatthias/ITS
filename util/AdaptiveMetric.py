@@ -11,10 +11,10 @@ class AdaptiveMetric:
     def save_metric(self, file_path):
         if self.M is None:
             raise ValueError("A matriz M precisa ser calculada antes de salvar.")
-        np.save(file_path, self.M)  # Salva no formato .npy!
+        np.save(file_path, self.M)
 
     def load_metric(self, file_path):
-        self.M = np.load(file_path)  # Carrega do formato .npy!
+        self.M = np.load(file_path)
 
     def extract_superpixels(self, image, segments):
         """
@@ -123,7 +123,7 @@ class AdaptiveMetric:
         flattened_superpixels = np.array([sp[0] for sp in superpixels])
 
         # Encontrar vizinhos usando NearestNeighbors
-        nn = NearestNeighbors(n_neighbors=20, algorithm='ball_tree').fit(flattened_superpixels)
+        nn = NearestNeighbors(n_neighbors=10, algorithm='ball_tree').fit(flattened_superpixels)
         neighbors = nn.kneighbors(flattened_superpixels, return_distance=False)
 
         for i, label1 in enumerate(unique_labels):
@@ -195,9 +195,8 @@ class AdaptiveMetric:
         """
         Treina o modelo de métrica adaptativa com base nos segmentos fornecidos.
         """
-        # Extrair superpixels e labels
+        
         superpixels, labels = self.extract_superpixels(image, segments)
-        # Calcular matriz métrica adaptativa
         self.update_metric_matrix(superpixels, labels)
 
     def classify_image(self, image, segments, threshold=0.1, show_data=False):
@@ -208,9 +207,7 @@ class AdaptiveMetric:
             print("Erro: A matriz métrica não está disponível. Treine o modelo primeiro.")
             return segments
 
-        # Extrair superpixels e labels
         superpixels, labels = self.extract_superpixels(image, segments)
-        # Mesclar segmentos semelhantes usando a métrica atual
         updated_segments = self.merge_similar_segments(segments, superpixels, labels, threshold, show_data=show_data)
 
         return updated_segments

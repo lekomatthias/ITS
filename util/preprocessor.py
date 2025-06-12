@@ -60,10 +60,5 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
     path = filedialog.askdirectory(title="Selecione a pasta para aplicação de entrada")
-    # img = get_maskared_image(path)
-    # # mostra a imagem gerada
-    # plt.imshow(img)
-    # plt.axis('off')
-    # plt.show()
 
     PreProcessor(path)

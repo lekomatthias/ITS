@@ -1,7 +1,6 @@
 import tkinter as tk
 
-from interface.SubInterface import SubInterface
-
+from interface.SubInterfaceFactory import SubInterfaceFactory
 
 class Menu:
     def __init__(self, functions, title="Menu"):
@@ -9,44 +8,65 @@ class Menu:
         self.root = tk.Tk()
         self.root.title(title)
         self.root.geometry("300x400")
+        self.canvas = None
+        self.scrollable_frame = None
+        self.window_id = None
 
     def build_interface(self):
+        self._add_title()
+        self._create_scrollable_area()
+        self._populate_functions()
+        self._add_exit_button()
+        self.root.mainloop()
+
+    def _add_title(self):
         tk.Label(self.root, text="Menu de funções", font=('Arial', 16)).pack(pady=10)
 
+    def _create_scrollable_area(self):
         container = tk.Frame(self.root)
         container.pack(fill='both', expand=True)
 
-        canvas = tk.Canvas(container, borderwidth=0)
-        canvas.pack(side='left', fill='both', expand=True)
+        container.grid_rowconfigure(0, weight=1)
+        container.grid_columnconfigure(0, weight=1)
 
-        scrollable_frame = tk.Frame(canvas)
+        self.canvas = tk.Canvas(container, borderwidth=0)
+        self.canvas.grid(row=0, column=0, sticky='nsew')
 
-        window_id = canvas.create_window((0, 0), window=scrollable_frame, anchor='nw')
+        scrollbar = tk.Scrollbar(container, orient='vertical', command=self.canvas.yview, width=15)
+        scrollbar.grid(row=0, column=1, sticky='ns')
 
-        def on_configure(event):
-            canvas.configure(scrollregion=canvas.bbox("all"))
-            canvas.itemconfig(window_id, width=canvas.winfo_width())
+        self.canvas.configure(yscrollcommand=scrollbar.set)
 
-        scrollable_frame.bind("<Configure>", on_configure)
+        self.scrollable_frame = tk.Frame(self.canvas)
+        self.window_id = self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor='nw')
 
-        def _on_mousewheel(event):
-            canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+        self.scrollable_frame.bind("<Configure>", self._on_frame_configure)
+        self.canvas.bind("<Configure>", self._on_canvas_resize)
 
-        canvas.bind_all("<MouseWheel>", _on_mousewheel)
-        canvas.bind_all("<Button-4>", lambda e: canvas.yview_scroll(-1, "units"))
-        canvas.bind_all("<Button-5>", lambda e: canvas.yview_scroll(1, "units"))
+        self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
+        self.canvas.bind_all("<Button-4>", lambda e: self.canvas.yview_scroll(-1, "units"))
+        self.canvas.bind_all("<Button-5>", lambda e: self.canvas.yview_scroll(1, "units"))
 
+    def _on_frame_configure(self, event):
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
+    def _on_canvas_resize(self, event):
+        self.canvas.itemconfig(self.window_id, width=event.width)
+
+    def _on_mousewheel(self, event):
+        self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+    def _populate_functions(self):
         for item in self.functions:
-            frame = tk.Frame(scrollable_frame)
+            frame = tk.Frame(self.scrollable_frame)
             frame.pack(pady=10)
-            SubInterface(
-                function=item['function'],
+            SubInterfaceFactory.create(
                 mode=item['mode'],
+                function=item['function'],
                 name=item['name'],
                 master=frame,
-                list=item.get('list', [])
+                options=item.get('list', [])
             )
 
+    def _add_exit_button(self):
         tk.Button(self.root, text="Sair", width=30, height=2, command=self.root.quit).pack(pady=5)
-
-        self.root.mainloop()
