@@ -1,7 +1,7 @@
 
 from core import *
 from interface import Menu
-from util import CSV2segments_process
+from util import CSV2JPG_process, CSV2segments_process
 
 if __name__ == "__main__":
 
@@ -39,6 +39,7 @@ if __name__ == "__main__":
         {'name': 'Contador', 'function': classifier.classify, 'mode': 'select', 'list': SP_list}, 
         {'name': 'Classificador', 'function': clusterer.Type_visualization, 'mode': 'select', 'list': alg_list}, 
         {'name': 'Classificador completo', 'function': clusterer.Type_visualization_list, 'mode': 'batch', 'list': alg_list}, 
+        {'name': 'CSV para JPG', 'function': CSV2JPG_process, 'mode': 'button'}, 
         {'name': 'CSV para segmentos', 'function': CSV2segments_process, 'mode': 'button'}, 
 
     ]

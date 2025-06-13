@@ -36,7 +36,7 @@ def CSV2JPG(path):
 
     return image
 
-def CSV2JPG_Process():
+def CSV2JPG_process():
     Process_f2f(CSV2JPG, imsave, type_in="csv", type_out="jpg")
 
 if __name__ == "__main__":
