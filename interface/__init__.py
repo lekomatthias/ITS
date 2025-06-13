@@ -1,7 +1,9 @@
 from .Menu import Menu
 from .SubInterface import SubInterface
 
+import sys
+
 __all__ = [
-    'SubInterface', 
-    'Menu',
+    name for name in dir(sys.modules[__name__])
+    if not name.startswith('_')
 ]

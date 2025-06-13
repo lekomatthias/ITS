@@ -3,6 +3,9 @@ import csv
 import random
 import numpy as np
 from PIL import Image
+from skimage.io import imsave
+
+from util.process_f2f import Process_f2f
 
 def Color_gen():
     return (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
@@ -32,6 +35,9 @@ def CSV2JPG(path):
     image = np.array(image, np.uint8)
 
     return image
+
+def CSV2JPG_Process():
+    Process_f2f(CSV2JPG, imsave, type_in="csv", type_out="jpg")
 
 if __name__ == "__main__":
 

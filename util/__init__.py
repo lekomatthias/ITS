@@ -6,35 +6,16 @@ from .AdaptiveMetric import AdaptiveMetric
 from .File_manager import create_folders, Load_Image, Save_image
 from .Image_manager import generate_contrasting_colors, Paint_image, Create_image_with_segments
 from .Segments_manager import First2Zero, Clusters2segments
-from .CSV2JPG import CSV2JPG
-from .CSV2segments import CSV2segments
-from .JPG2segments import JPG2segments
+from .CSV2JPG import CSV2JPG, CSV2JPG_Process
+from .CSV2segments import CSV2segments, CSV2segments_process
+from .JPG2segments import JPG2segments, JPG2segments_process
 from .segments2JPG import segments2JPG
 from .process_f2f import Process_f2f
 from .Optimal_clusters import Show_inertia, Find_optimal_eps, Find_optimal_k
 
-__all__ = [
-    'Enforce_connectivity',
-    'Segment_cutting',
-    'Shape_selector',
-    'GetPixelsOfArea',
-    'SP_grouper',
-    'AdaptiveMetric',
-    'create_folders',
-    'Load_Image',
-    'Save_image',
-    'generate_contrasting_colors',
-    'Paint_image',
-    'Create_image_with_segments',
-    'First2Zero',
-    'Clusters2segments',
-    'CSV2JPG',
-    'CSV2segments',
-    'JPG2segments',
-    'segments2JPG',
-    'Process_f2f',
-    'Show_inertia',
-    'Find_optimal_k', 
-    'Find_optimal_eps',
+import sys
 
+__all__ = [
+    name for name in dir(sys.modules[__name__])
+    if not name.startswith('_')
 ]
