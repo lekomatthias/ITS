@@ -10,6 +10,7 @@ class Menu:
         self.root.geometry("300x400")
         self.canvas = None
         self.scrollable_frame = None
+        self._scroll_pending = False
         self.window_id = None
 
     def build_interface(self):
@@ -21,6 +22,16 @@ class Menu:
 
     def _add_title(self):
         tk.Label(self.root, text="Menu de funções", font=('Arial', 16)).pack(pady=10)
+
+    def _bind_mousewheel(self):
+        self.root.bind_all("<MouseWheel>", self._on_mousewheel)
+        self.root.bind_all("<Button-4>", lambda e: self.canvas.yview_scroll(-1, "units"))
+        self.root.bind_all("<Button-5>", lambda e: self.canvas.yview_scroll(1, "units"))
+
+    def _unbind_mousewheel(self):
+        self.root.unbind_all("<MouseWheel>")
+        self.root.unbind_all("<Button-4>")
+        self.root.unbind_all("<Button-5>")
 
     def _create_scrollable_area(self):
         container = tk.Frame(self.root)
@@ -43,9 +54,8 @@ class Menu:
         self.scrollable_frame.bind("<Configure>", self._on_frame_configure)
         self.canvas.bind("<Configure>", self._on_canvas_resize)
 
-        self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
-        self.canvas.bind_all("<Button-4>", lambda e: self.canvas.yview_scroll(-1, "units"))
-        self.canvas.bind_all("<Button-5>", lambda e: self.canvas.yview_scroll(1, "units"))
+        self.canvas.bind("<Enter>", lambda e: self._bind_mousewheel())
+        self.canvas.bind("<Leave>", lambda e: self._unbind_mousewheel())
 
     def _on_frame_configure(self, event):
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
@@ -53,8 +63,15 @@ class Menu:
     def _on_canvas_resize(self, event):
         self.canvas.itemconfig(self.window_id, width=event.width)
 
+    def _reset_scroll_flag(self):
+        self._scroll_pending = False
+
     def _on_mousewheel(self, event):
+        if self._scroll_pending:
+            return
+        self._scroll_pending = True
         self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+        self.root.after_idle(self._reset_scroll_flag)
 
     def _populate_functions(self):
         for item in self.functions:
