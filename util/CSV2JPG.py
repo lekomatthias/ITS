@@ -2,7 +2,7 @@
 import csv
 import random
 import numpy as np
-from PIL import Image
+from collections import defaultdict
 from skimage.io import imsave
 
 from util.process_f2f import Process_f2f
@@ -11,30 +11,20 @@ def Color_gen():
     return (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
 def CSV2JPG(path):
+    colors = defaultdict(Color_gen)
+    pixels = []
 
-    with open(path, mode='r') as arquivo_csv:
-        reader = csv.reader(arquivo_csv)
-        data = list(reader)
+    with open(path, mode='r') as file:
+        reader = csv.reader(file)
+        for linha in reader:
+            row = []
+            for valor in linha:
+                label = int(valor)
+                row.append(colors[label])
+            pixels.append(row)
 
-    unique_labels = set()
-    for linha in data:
-        for valor in linha:
-            unique_labels.add(int(valor))
+    return np.array(pixels, dtype=np.uint8)
 
-    # Criar um dicionário de cores associadas a cada número único
-    colors = {numero: Color_gen() for numero in unique_labels}
-
-    h = len(data)
-    w = len(data[0])
-    image = Image.new('RGB', (w, h))
-    for y, line in enumerate(data):
-        for x, value in enumerate(line):
-            label = int(value)
-            color = colors[label]
-            image.putpixel((x, y), color)
-    image = np.array(image, np.uint8)
-
-    return image
 
 def CSV2JPG_process():
     Process_f2f(CSV2JPG, imsave, type_in="csv", type_out="jpg")
