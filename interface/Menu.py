@@ -74,9 +74,15 @@ class Menu:
         self.root.after_idle(self._reset_scroll_flag)
 
     def _populate_functions(self):
-        for item in self.functions:
+        self.function_index = 0
+        self._load_next_function()
+
+    def _load_next_function(self):
+        if self.function_index < len(self.functions):
+            item = self.functions[self.function_index]
             frame = tk.Frame(self.scrollable_frame)
             frame.pack(pady=10)
+
             SubInterfaceFactory.create(
                 mode=item['mode'],
                 function=item['function'],
@@ -84,6 +90,10 @@ class Menu:
                 master=frame,
                 options=item.get('list', [])
             )
+
+            self.function_index += 1
+            self.root.after(50, self._load_next_function)
+
 
     def _add_exit_button(self):
         tk.Button(self.root, text="Sair", width=30, height=2, command=self.root.quit).pack(pady=5)
