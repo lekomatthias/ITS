@@ -14,4 +14,6 @@ COMO USAR:
  - Por fim pode-se selecionar a opção "classificador", que classifica as árvores encontradas em espécies.
 
    
-Obs.: O modelo knn fica no local das imagens e é selecionado pelo usuário.
+Obs. 1: O modelo knn fica no local das imagens e é selecionado pelo usuário.
+
+Obs. 2: O modelo knn pode ser agilizado usando LUT (look up table), então ao selecionar a knn para uso o arquivo de LUT será criado. No lugar de selecionar a knn, pode-se selecionar a LUT.
