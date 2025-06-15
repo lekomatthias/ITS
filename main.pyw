@@ -1,7 +1,7 @@
 
 from core import *
 from interface import Menu
-from util import CSV2JPG_process, CSV2segments_process
+from util import CSV2segments_process, All_images
 
 if __name__ == "__main__":
 
@@ -9,7 +9,10 @@ if __name__ == "__main__":
     knn = knn_train()
     metric = Metric_train(num_segments=n_seg)
     classifier = SuperpixelClassifier(num_segments=n_seg)
+    all_sp_divide = All_images(classifier.SP_divide)
+    all_count = All_images(classifier.classify)
     clusterer = ClusteringClassifier(num_segments=n_seg)
+    all_classify = All_images(clusterer.Type_visualization_list)
 
     SP_list = [
         "slic", 
@@ -32,15 +35,17 @@ if __name__ == "__main__":
         "SOM",
      ]
     
-    functions = [
+    functions = [ 
+        {'name': 'CSV para segmentos', 'function': CSV2segments_process, 'mode': 'button'}, 
         {'name': 'Treinar K-nn', 'function': knn.run, 'mode': 'open'}, 
         {'name': 'Segmentador', 'function': classifier.SP_divide, 'mode': 'select', 'list': SP_list}, 
         {'name': 'Treinar métrica', 'function': metric.Train, 'mode': 'open'}, 
         {'name': 'Contador', 'function': classifier.classify, 'mode': 'select', 'list': SP_list}, 
         {'name': 'Classificador', 'function': clusterer.Type_visualization, 'mode': 'select', 'list': alg_list}, 
         {'name': 'Classificador completo', 'function': clusterer.Type_visualization_list, 'mode': 'batch', 'list': alg_list}, 
-        {'name': 'CSV para JPG', 'function': CSV2JPG_process, 'mode': 'button'}, 
-        {'name': 'CSV para segmentos', 'function': CSV2segments_process, 'mode': 'button'}, 
+        {'name': 'Segmentador em pasta', 'function': all_sp_divide, 'mode': 'select', 'list': SP_list}, 
+        {'name': 'Contador em pasta', 'function': all_count, 'mode': 'select', 'list': SP_list},  
+        {'name': 'Classificar em pasta', 'function': all_classify, 'mode': 'batch', 'list': alg_list}, 
 
     ]
     

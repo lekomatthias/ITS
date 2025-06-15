@@ -7,7 +7,7 @@ class Menu:
         self.functions = functions
         self.root = tk.Tk()
         self.root.title(title)
-        self.root.geometry("300x400")
+        self.root.geometry("300x500")
         self.canvas = None
         self.scrollable_frame = None
         self._scroll_pending = False

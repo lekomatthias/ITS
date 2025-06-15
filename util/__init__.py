@@ -12,6 +12,7 @@ from .JPG2segments import JPG2segments, JPG2segments_process
 from .segments2JPG import segments2JPG
 from .process_f2f import Process_f2f
 from .Optimal_clusters import Show_inertia, Find_optimal_eps, Find_optimal_k
+from .All_images import All_images
 
 import sys
 
