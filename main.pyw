@@ -1,7 +1,11 @@
+from time import time
+it = time()
 
 from core import *
 from interface import Menu
 from util import CSV2segments_process, All_images
+
+print(f"tempo até imports: {time()-it:.2f}s")
 
 if __name__ == "__main__":
 
@@ -51,5 +55,7 @@ if __name__ == "__main__":
     
     menu = Menu(functions=functions, 
                 title="Operações")
+    
+    print(f"tempo até criação de Menu: {time()-it:.2f}s")
 
     menu.build_interface()

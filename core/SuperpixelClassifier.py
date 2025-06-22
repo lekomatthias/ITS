@@ -112,7 +112,7 @@ class SuperpixelClassifier:
             if not metric_path:
                 print("Nenhum modelo selecionado. Encerrando o programa.")
                 exit()
-        Similar_SP = AdaptiveMetric()
+        Similar_SP = AdaptativeMetric()
         Similar_SP.load_metric(metric_path)
 
         print("Classificando os superpixels...")

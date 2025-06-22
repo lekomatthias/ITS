@@ -69,6 +69,8 @@ def Find_optimal_k(sp_list, algorithm_name="KMeans", k_min=None, k_max=None, sho
     
     distortions = []
     k_values = list(range(k_min, k_max + 1))
+    if k_values[0] < 2:
+        k_values += 1
     if algorithm_name == "KMeans":
         for k in k_values:
             model = KMeans(n_clusters=k, random_state=0)

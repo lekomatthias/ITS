@@ -26,7 +26,7 @@ class Metric_train:
         metric_path = os.path.join(apply_image_dir, "metricas", metric_name)
         if not os.path.exists(metric_path) and self.new_model:
             print("Nenhum modelo encontrado, treinando um novo modelo.")
-        Similar_SP = AdaptiveMetric()
+        Similar_SP = AdaptativeMetric()
         Similar_SP.load_metric(metric_path)
         print(f"Modelo carregado de {metric_path}")
 
