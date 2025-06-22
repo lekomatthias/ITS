@@ -2,7 +2,7 @@ from .Enforce_connectivity import Enforce_connectivity
 from .segment_cutting import Segment_cutting
 from .segment_qntt_select import Shape_selector, GetPixelsOfArea
 from .SP_grouper import SP_grouper
-from .AdaptiveMetric import AdaptiveMetric
+from .AdaptativeMetric import AdaptativeMetric
 from .File_manager import create_folders, Load_Image, Save_image
 from .Image_manager import generate_contrasting_colors, Paint_image, Create_image_with_segments
 from .Segments_manager import First2Zero, Clusters2segments
